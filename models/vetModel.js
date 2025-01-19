@@ -39,6 +39,7 @@ const vetSchema = mongoose.Schema({
     },
     date: {
         type: Number,
+        default: Date.now()
     },
     slots_book: {
         type: Object,
