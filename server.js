@@ -4,6 +4,7 @@ import connectDB from "./config/mongodb.js";
 import { configDotenv } from "dotenv";
 import connectCloudinary from "./config/cloudinary.js";
 import vetRouter from "./routes/vetRouter.js";
+import userRouter from "./routes/userRouter.js";
 configDotenv();
 
 // server config
@@ -17,7 +18,8 @@ app.use(cors());
 app.use(express.json());
 
 // routers
-app.use("/api/vet", vetRouter)
+app.use("/api/vet", vetRouter);
+app.use("/api/user", userRouter);
 
 app.listen(PORT, () => {
     console.log(`The server is running on port: http://localhost:${PORT}`)
