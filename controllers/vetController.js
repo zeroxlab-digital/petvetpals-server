@@ -48,3 +48,12 @@ export const loginVet = async (req, res) => {
         console.log(error);
     }
 }
+
+export const getAllVets = async (req, res) => {
+    try {
+        const vets = await Vet.find();
+        res.status(200).json({ success: true, vets })
+    } catch(error) {
+        console.log(error);
+    }
+}
