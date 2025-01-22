@@ -16,8 +16,8 @@ const vetSchema = mongoose.Schema({
     },
     gender: {
         type: String,
-        enum: ["male", "female", "Not specified"],
-        default: "Not specified"
+        enum: ["male", "female"],
+        default: null
     },
     image: {
         type: String,
@@ -47,11 +47,20 @@ const vetSchema = mongoose.Schema({
         default: 0,
         required: true
     },
+    experiences: {
+        type: Array,
+        default: [],
+    },
+    works_at: {
+        type: Object,
+        default: {},
+        required: false
+    },
     slots_booked: {
         type: Array,
         default: [],
         required: true
     }
-}, { timestamp: true })
+}, { timestamp: true, minimize: false })
 
 export const Vet = mongoose.model("Vet", vetSchema);
