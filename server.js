@@ -5,6 +5,7 @@ import { configDotenv } from "dotenv";
 import connectCloudinary from "./config/cloudinary.js";
 import vetRouter from "./routes/vetRouter.js";
 import userRouter from "./routes/userRouter.js";
+import cookieParser from "cookie-parser";
 configDotenv();
 
 // server config
@@ -16,6 +17,7 @@ connectCloudinary();
 // middleware
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 // routers
 app.use("/api/vet", vetRouter);

@@ -23,9 +23,10 @@ const vetSchema = mongoose.Schema({
         type: String,
         default: "",
     },
-    speciality: {
-        type: String,
-        default: "",
+    specialities: {
+        type: Array,
+        default: [],
+        required: true
     },
     about: {
         type: String,
@@ -33,25 +34,24 @@ const vetSchema = mongoose.Schema({
     },
     fees: {
         type: Number,
-        default: 0
+        default: 0,
+        required: true
     },
-    degree: {
-        type: String,
-        default: "",
+    degrees: {
+        type: Array,
+        default: [],
+        required: true
     },
-    experience: {
+    experience_years: {
         type: Number,
-        default: 0
+        default: 0,
+        required: true
     },
-    date: {
-        type: Number,
-        default: Date.now()
-    },
-    slots_book: {
-        type: Object,
-        default: {},
-        required: false
+    slots_booked: {
+        type: Array,
+        default: [],
+        required: true
     }
-}, { minimize: false })
+}, { timestamp: true })
 
 export const Vet = mongoose.model("Vet", vetSchema);

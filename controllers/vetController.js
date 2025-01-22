@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { Vet } from "../models/vetModel.js";
 import jwt from "jsonwebtoken";
+import { Appointment } from "../models/appointmentModel.js";
 
 export const registerVet = async (req, res) => {
     try {
@@ -53,7 +54,57 @@ export const getAllVets = async (req, res) => {
     try {
         const vets = await Vet.find();
         res.status(200).json({ success: true, vets })
-    } catch(error) {
+    } catch (error) {
         console.log(error);
     }
 }
+
+export const getVet = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const vet = await Vet.findById(id);
+        res.status(200).json(vet);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const getAppointment = async (req, res) => {
+    try {
+        const userId = req.id;
+        const vetId = req.params.id;
+        const { date } = req.body;
+
+        let vet = await Vet.findOne({ _id: vetId });
+
+        const requestedDate = new Date(date);
+
+        // Check if the date is already booked
+        const availability = vet.slots_booked.filter(item => {
+            const bookedDate = new Date(item.date);
+            return bookedDate.getTime() === requestedDate.getTime();
+        });
+
+        if (availability.length > 0) {
+            return res.status(404).json({ message: "Date not available!" });
+        }
+
+        // Create a new appointment
+        const newAppointment = await Appointment.create({
+            user: userId,
+            vet: vetId,
+            date: requestedDate
+        });
+
+        // Update the vet slots booked if new appointment takes place
+        if (newAppointment) {
+            vet.slots_booked.push({ date: requestedDate, appointmentId: newAppointment._id });
+        }
+        await vet.save();
+
+        res.status(200).json({ message: "New Appointment booked", newAppointment });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};

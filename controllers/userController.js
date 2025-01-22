@@ -42,7 +42,7 @@ export const userLogin = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials!" });
         }
         const userDetails = await User.findOne({ email }).select("-password");
-        const user_token = await jwt.sign({ userData: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' });
+        const user_token = await jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' });
         res.status(200).cookie("user_token", user_token, { maxAge: 1 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'strict' }).json({ success: 'true', message: "User login successfull!", userDetails })
     } catch (error) {
         console.log(error);
