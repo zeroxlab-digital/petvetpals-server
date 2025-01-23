@@ -6,6 +6,7 @@ import connectCloudinary from "./config/cloudinary.js";
 import vetRouter from "./routes/vetRouter.js";
 import userRouter from "./routes/userRouter.js";
 import cookieParser from "cookie-parser";
+import appointmentRouter from "./routes/appointmentRouter.js";
 configDotenv();
 
 // server config
@@ -22,6 +23,7 @@ app.use(cookieParser());
 // routers
 app.use("/api/vet", vetRouter);
 app.use("/api/user", userRouter);
+app.use("/api/appointment", appointmentRouter);
 
 app.listen(PORT, () => {
     console.log(`The server is running on port: http://localhost:${PORT}`)
