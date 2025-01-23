@@ -24,6 +24,7 @@ export const userRegister = async (req, res) => {
         res.status(200).json({ status: "success", message: "User created successfully!" });
     } catch (error) {
         console.log(error);
+        res.status(400).json({ message: "Internal server error!", error });
     }
 }
 
@@ -46,5 +47,6 @@ export const userLogin = async (req, res) => {
         res.status(200).cookie("user_token", user_token, { maxAge: 1 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'strict' }).json({ success: 'true', message: "User login successfull!", userDetails })
     } catch (error) {
         console.log(error);
+        res.status(400).json({ message: "Internal server error!", error });
     }
 }

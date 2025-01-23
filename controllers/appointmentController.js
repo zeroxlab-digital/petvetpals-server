@@ -37,7 +37,7 @@ export const bookAppointment = async (req, res) => {
         res.status(200).json({ message: "New Appointment booked", newAppointment });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ message: "Internal server error", error });
     }
 };
 
@@ -49,7 +49,7 @@ export const viewAppointments = async (req, res) => {
         }).populate({ path: 'vet user', select: "-password -slots_booked" });
         res.status(200).json({ success: true, appointments })
     } catch(error) {
-        console.log(userId)
-        res.status(200).json({ message: "Internal server error!" })
+        console.log(error)
+        res.status(200).json({ message: "Internal server error!", error })
     }
 }
