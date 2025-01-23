@@ -69,7 +69,7 @@ export const getVet = async (req, res) => {
     }
 }
 
-export const getAppointment = async (req, res) => {
+export const bookAppointment = async (req, res) => {
     try {
         const userId = req.id;
         const vetId = req.params.id;

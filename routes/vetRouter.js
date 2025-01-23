@@ -1,19 +1,18 @@
 import express from "express";
-import { getAllVets, getAppointment, getVet, loginVet, registerVet, viewAppointments } from "../controllers/vetController.js";
-import upload from "../middlewares/multer.js";
+import { bookAppointment, getAllVets, getVet, loginVet, registerVet, viewAppointments } from "../controllers/vetController.js";
 import userAuthenticated from "../middlewares/userAuthenticated.js";
 const vetRouter = express.Router();
 
 // Vet appointment routers
-vetRouter.get("/appointments", userAuthenticated, viewAppointments);
-vetRouter.post("/:id/appointment", userAuthenticated, getAppointment);
+vetRouter.get("/view-appointments", userAuthenticated, viewAppointments);
+vetRouter.post("/:id/appointment", userAuthenticated, bookAppointment);
 
 // vet registration and login routers
-vetRouter.post("/register", upload.single("image"), registerVet);
+vetRouter.post("/register", registerVet);
 vetRouter.post("/login", loginVet);
 
-// get vet related routers
-vetRouter.get("/", getAllVets);
-vetRouter.get("/:id", getVet);
+// vet related routers
+vetRouter.get("/all-vets", getAllVets);
+vetRouter.get("/all-vets/:id", getVet);
 
 export default vetRouter;
