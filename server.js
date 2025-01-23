@@ -16,9 +16,13 @@ connectDB();
 connectCloudinary();
 
 // middleware
-app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+const corsOption = {
+    origin: 'http://localhost:3000',
+    credentials: true
+}
+app.use(cors(corsOption));
 
 // routers
 app.use("/api/vet", vetRouter);
