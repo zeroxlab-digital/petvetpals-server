@@ -51,6 +51,36 @@ export const loginVet = async (req, res) => {
     }
 }
 
+export const updateVetProfile = async (req, res) => {
+    try {
+        const vetId = req.id;
+        const { id } = req.params;
+        if (vetId !== id) {
+            return res.status(400).json({ message: "Vet is not authenticated!" });
+        }
+        const { fullName, fees, gender, image, about, experience_years, experiences, degrees, specialities, works_at } = req.body;;
+        const updateVet = await Vet.findByIdAndUpdate(id , {
+            fullName,
+            fees,
+            gender,
+            image,
+            about,
+            experience_years,
+            experiences,
+            degrees,
+            specialities,
+            works_at
+        }, { new: true, runValidator: true })
+        if (!updateVet) {
+            res.status(400).json({ message: "Updating vet failed!", success: false })
+        }
+        res.status(200).json({ message: "Vet updated successfull!", success: true })
+    } catch (error) {
+        console.log(error);
+        res.status(400).json({ message: "Internal server error while updating vet!", error })
+    }
+}
+
 export const getAllVets = async (req, res) => {
     try {
         const vets = await Vet.find().select("-password -slots_booked -__v");
