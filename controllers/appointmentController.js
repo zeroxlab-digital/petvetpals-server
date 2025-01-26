@@ -18,14 +18,15 @@ export const bookAppointment = async (req, res) => {
         });
 
         if (availability.length > 0) {
-            return res.status(404).json({ message: "Date not available!" });
+            return res.status(400).json({ message: "Date not available!" });
         }
 
         // Create a new appointment
         const newAppointment = await Appointment.create({
             user: userId,
             vet: vetId,
-            date: requestedDate
+            date: requestedDate,
+            status: "pending"
         });
 
         // Update the vet slots booked if new appointment takes place

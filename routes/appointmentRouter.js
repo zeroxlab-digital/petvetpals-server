@@ -5,6 +5,6 @@ const appointmentRouter = express.Router();
 
 // Vet appointment routers
 appointmentRouter.get("/view-appointments", userAuthenticated, viewAppointments);
-appointmentRouter.post("/:id/book-appointment", userAuthenticated, bookAppointment);
+appointmentRouter.post("/book-appointment/:id", userAuthenticated, bookAppointment);
 
 export default appointmentRouter;
