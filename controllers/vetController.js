@@ -53,7 +53,7 @@ export const loginVet = async (req, res) => {
 
 export const getAllVets = async (req, res) => {
     try {
-        const vets = await Vet.find();
+        const vets = await Vet.find().select("-password -slots_booked -__v");
         res.status(200).json({ success: true, vets })
     } catch (error) {
         console.log(error);
@@ -64,7 +64,7 @@ export const getAllVets = async (req, res) => {
 export const getVet = async (req, res) => {
     const { id } = req.params;
     try {
-        const vet = await Vet.findById(id);
+        const vet = await Vet.findById(id).select("-password -slots_booked -__v");
         res.status(200).json(vet);
     } catch (error) {
         console.log(error);
