@@ -52,9 +52,8 @@ const vetSchema = mongoose.Schema({
         default: [],
     },
     works_at: {
-        type: Object,
-        default: {},
-        required: false
+        type: String,
+        default: null
     },
     slots_booked: {
         type: Array,
