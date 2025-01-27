@@ -47,7 +47,7 @@ export const viewAppointments = async (req, res) => {
         const userId = req.id;
         const appointments = await Appointment.find({
             user: userId,
-        }).populate({ path: 'vet user', select: "-password -slots_booked" });
+        }).populate({ path: 'vet', select: "-password -slots_booked" });
         res.status(200).json({ success: true, appointments })
     } catch(error) {
         console.log(error)
