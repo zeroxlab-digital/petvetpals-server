@@ -49,8 +49,22 @@ export const viewAppointments = async (req, res) => {
             user: userId,
         }).populate({ path: 'vet', select: "-password -slots_booked" });
         res.status(200).json({ success: true, appointments })
-    } catch(error) {
+    } catch (error) {
         console.log(error)
-        res.status(200).json({ message: "Internal server error!", error })
+        res.status(500).json({ message: "Internal server error!", error })
+    }
+}
+
+export const deleteAppointment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deleteAppt = await Appointment.findOneAndDelete({ _id: id });
+        if (!deleteAppt) {
+            return res.status(400).json({ success: false, message: "Appointment could not be deleted!" })
+        }
+        res.status(200).json({ success: true, message: "Appointment deleted successfully!" })
+    } catch (error) {
+        console.log("Error deleting appointment!", error)
+        res.status(500).json({ message: "Internal server error!", error })
     }
 }
