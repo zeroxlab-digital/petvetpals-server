@@ -7,6 +7,7 @@ import vetRouter from "./routes/vetRouter.js";
 import userRouter from "./routes/userRouter.js";
 import cookieParser from "cookie-parser";
 import appointmentRouter from "./routes/appointmentRouter.js";
+import petRouter from "./routes/petRouter.js";
 configDotenv();
 
 // server config
@@ -28,6 +29,7 @@ app.use(cors(corsOption));
 app.use("/api/vet", vetRouter);
 app.use("/api/user", userRouter);
 app.use("/api/appointment", appointmentRouter);
+app.use("/api/pet", petRouter);
 
 app.listen(PORT, () => {
     console.log(`The server is running on port: http://localhost:${PORT}`)

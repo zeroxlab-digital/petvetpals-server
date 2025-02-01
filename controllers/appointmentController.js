@@ -42,6 +42,15 @@ export const bookAppointment = async (req, res) => {
     }
 };
 
+const updateAppointment = async (req, res) => {
+    try {
+        console.log("Update appointment");
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+
 export const viewAppointments = async (req, res) => {
     try {
         const userId = req.id;
