@@ -2,7 +2,8 @@ import { Pet } from "../models/petModel.js";
 
 export const getPetProfiles = async (req, res) => {
     try {
-        const pets = await Pet.find().select("-__v");
+        const userId = req.id;
+        const pets = await Pet.find({ user: userId }).select("-__v");
         res.status(200).json({ success: true, pets });
     } catch (error) {
         console.log(error);
@@ -12,12 +13,13 @@ export const getPetProfiles = async (req, res) => {
 
 export const addPetProfile = async (req, res) => {
     try {
+        const user = req.id;
         const { type, name, age, image, gender, weight, breed } = req.body;
         if (!type || !name || !age || !gender) {
             return res.status(400).json({ message: "Pet type, name, age and gender is required!" })
         }
         const petProfile = await Pet.create({
-            type, name, age, image, gender, weight, breed
+            user, type, name, age, image, gender, weight, breed
         })
         res.status(200).json({ success: true, message: "New pet profile added!", petProfile })
     } catch (error) {
