@@ -45,9 +45,9 @@ export const bookAppointment = async (req, res) => {
 export const updateAppointment = async (req, res) => {
     try {
         const { id } = req.params;
-        const { pet, purpose, payment_status } = req.body;
+        const { pet, purpose, payment_status, status } = req.body;
         const updateAppt = await Appointment.findByIdAndUpdate({ _id: id }, {
-            pet, purpose, payment_status
+            pet, purpose, payment_status, status
         }, { new: true, runValidators: true });
         if(!updateAppt) {
             return res.status(400).json({ success: false, message: "Could not update the appointment!" });
