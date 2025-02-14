@@ -26,6 +26,9 @@ const corsOption = {
 app.use(cors(corsOption));
 
 // routers
+app.get("/", (req, res) => {
+    res.send("Hello world, welcome to PetVetPals!")
+})
 app.use("/api/vet", vetRouter);
 app.use("/api/user", userRouter);
 app.use("/api/appointment", appointmentRouter);
