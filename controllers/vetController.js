@@ -87,7 +87,7 @@ export const getAllVets = async (req, res) => {
         res.status(200).json({ success: true, vets })
     } catch (error) {
         console.log(error);
-        res.status(400).json({ message: "Internal server error!", error });
+        res.status(400).json({ message: "Internal server error while getting all vets!", error });
     }
 }
 
