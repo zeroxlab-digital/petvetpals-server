@@ -8,6 +8,7 @@ import userRouter from "./routes/userRouter.js";
 import cookieParser from "cookie-parser";
 import appointmentRouter from "./routes/appointmentRouter.js";
 import petRouter from "./routes/petRouter.js";
+import messageRouter from "./routes/messenger/messeageRoute.js";
 configDotenv();
 
 // server config
@@ -33,6 +34,9 @@ app.use("/api/vet", vetRouter);
 app.use("/api/user", userRouter);
 app.use("/api/appointment", appointmentRouter);
 app.use("/api/pet", petRouter);
+
+// Routes for the messenger between pet owner and vet :)
+app.use("/api/message", messageRouter);
 
 app.listen(PORT, () => {
     console.log(`The server is running on port: http://localhost:${PORT}`)
