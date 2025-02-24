@@ -1,5 +1,6 @@
 import { Conversation } from "../../models/messenger/conversationModel.js";
 import { Message } from "../../models/messenger/messageModel.js";
+import { User } from "../../models/userModel.js";
 
 export const handleSendMessage = async (req, res) => {
     try {
@@ -84,3 +85,19 @@ export const handleGetMessage = async (req, res) => {
         res.status(500).json({ message: "Error while getting messages!", error: error.message });
     }
 };
+
+
+export const handleGetUsersMessasged = async (req, res) => {
+    try {
+        const vetId = req.id;
+        const conversation = await Conversation.find({ vet: vetId }).select("user");
+        if(conversation.length < 1) {
+            return res.status(404).json({ message: "No conversation found!" })
+        }
+        const users = await User.find({ _id: conversation.map(convo => convo.user) }).select("-password -__v -address");
+        res.status(200).json({ success: true, users })
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ message: "Error while users messaged!", error: error.message });
+    }
+}
