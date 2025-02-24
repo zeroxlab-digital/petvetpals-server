@@ -81,6 +81,22 @@ export const updateVetProfile = async (req, res) => {
     }
 }
 
+export const vetLogout = async (req, res) => {
+    try {
+        res.clearCookie("vet_token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production", // Use secure in production
+            sameSite: "strict"
+        });
+
+        return res.json({ success: true, message: "Logout successful!" });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ success: false, message: "Internal server error", error });
+    }
+};
+
+
 export const getAllVets = async (req, res) => {
     try {
         const vets = await Vet.find().select("-password -slots_booked -__v");

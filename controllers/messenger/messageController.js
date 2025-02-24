@@ -46,5 +46,41 @@ export const handleSendMessage = async (req, res) => {
 }
 
 export const handleGetMessage = async (req, res) => {
-    res.json("Get message!")
-}
+    try {
+        const senderId = req.id;
+        const receiverId = req.params.id;
+
+        if (!req.role) {
+            return res.status(401).json({ message: "Invalid role! Must be user or vet" });
+        }
+
+        let userId, vetId;
+
+        if (req.role === "user") {
+            userId = senderId;
+            vetId = receiverId;
+        } else {
+            vetId = senderId;
+            userId = receiverId;
+        }
+
+        const conversation = await Conversation.findOne({
+            user: userId,
+            vet: vetId
+        }).populate("messages");
+
+        if (!conversation) {
+            return res.status(404).json({ message: "No conversation found!" });
+        }
+
+        // Extra security check: ensure the requester is actually a participant
+        if (conversation.user.toString() !== senderId && conversation.vet.toString() !== senderId) {
+            return res.status(403).json({ message: "You are not authorized to view these messages!" });
+        }
+
+        res.status(200).json({ success: true, messages: conversation.messages });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ message: "Error while getting messages!", error: error.message });
+    }
+};

@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllVets, getVet, loginVet, registerVet, updateVetProfile } from "../controllers/vetController.js";
+import { getAllVets, getVet, loginVet, registerVet, updateVetProfile, vetLogout } from "../controllers/vetController.js";
 import vetAuthenticated from "../middlewares/vetAuthenticated.js";
 const vetRouter = express.Router();
 
@@ -7,6 +7,7 @@ const vetRouter = express.Router();
 vetRouter.post("/register", registerVet);
 vetRouter.post("/login", loginVet);
 vetRouter.patch("/update/:id", vetAuthenticated, updateVetProfile)
+vetRouter.post("/logout", vetAuthenticated, vetLogout)
 
 // vet related routers
 vetRouter.get("/all-vets", getAllVets);
