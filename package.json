@@ -2,11 +2,11 @@
   "name": "petvetpals-server",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "api/server.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "nodemon api/server.js"
   },
   "author": "",
   "license": "ISC",
@@ -22,6 +22,7 @@
     "mongoose": "^8.9.5",
     "multer": "^1.4.5-lts.1",
     "nodemon": "^3.1.9",
+    "serverless-http": "^3.2.0",
     "validator": "^13.12.0"
   }
 }

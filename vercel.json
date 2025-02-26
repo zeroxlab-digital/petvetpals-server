@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "functions": {
+    "api/server.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/server.js"
+    }
+  ]
+}

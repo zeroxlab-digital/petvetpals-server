@@ -1,14 +1,15 @@
 import express from "express";
 import cors from "cors";
-import connectDB from "./config/mongodb.js";
+import connectDB from "../config/mongodb.js";
 import { configDotenv } from "dotenv";
-import connectCloudinary from "./config/cloudinary.js";
-import vetRouter from "./routes/vetRouter.js";
-import userRouter from "./routes/userRouter.js";
+import connectCloudinary from "../config/cloudinary.js";
+import vetRouter from "../routes/vetRouter.js";
+import userRouter from "../routes/userRouter.js";
 import cookieParser from "cookie-parser";
-import appointmentRouter from "./routes/appointmentRouter.js";
-import petRouter from "./routes/petRouter.js";
-import messageRouter from "./routes/messenger/messeageRoute.js";
+import appointmentRouter from "../routes/appointmentRouter.js";
+import petRouter from "../routes/petRouter.js";
+import messageRouter from "../routes/messenger/messeageRoute.js";
+import serverless from "serverless-http";
 configDotenv();
 
 // server config
@@ -41,3 +42,6 @@ app.use("/api/message", messageRouter);
 app.listen(PORT, () => {
     console.log(`The server is running on port: http://localhost:${PORT}`)
 })
+
+// export default app;
+export const handler = serverless(app);
