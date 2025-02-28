@@ -21,12 +21,20 @@ const userSchema = mongoose.Schema({
     },
     image: {
         type: String,
-        default: "",
+        default: null,
     },
     address: {
         type: String,
         default: null,
     },
+    city: {
+        type: String,
+        default: null,
+    },
+    zip: {
+        type: String,
+        default: null,
+    }
 }, { timestamp: true })
 
 export const User = mongoose.model("User", userSchema);

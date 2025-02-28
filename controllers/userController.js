@@ -65,3 +65,31 @@ export const userLogout = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error", error });
     }
 };
+
+export const getUserDetails = async (req, res) => {
+    try {
+        const userId = req.id;
+        const user = await User.findOne({ _id: userId }).select("-password -__v");
+        res.status(200).json({ success: true, user })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ success: false, message: "Internal server error", error });
+    }
+}
+
+export const updateUserDetails = async (req, res) => {
+    try {
+        const userId = req.id;
+        const { fullName, image, gender, address, city, zip } = req.body;
+        const updateUser = await User.findByIdAndUpdate({ _id: userId }, {
+            fullName, image, gender, address, city, zip,
+        }, { new: true, runValidators: true }).select("-password")
+        if (!updateUser) {
+            return res.status(500).json({ success: false, message: "User profile could not be updated!" })
+        }
+        res.status(200).json({ success: true, message: "User profile update successfull!" });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ success: false, message: "Internal server error", error });
+    }
+}
