@@ -54,12 +54,29 @@ export const addPetProfile = async (req, res) => {
 export const updatePetProfile = async (req, res) => {
     try {
         const { id } = req.params;
-        const { type, name, age, image, gender, weight, breed } = req.body;
+        const { type, name, age, gender, weight, breed } = req.body;
+
+        let imageUrl = "";
+        if (req.file) {
+            // If a file was included while requesting api then upload to Cloudinary
+            const result = await new Promise((resolve, reject) => {
+                cloudinary.uploader.upload_stream(
+                    { folder: "pet_profiles", format: "jpg" },
+                    (error, uploadedFile) => {
+                        if (error) reject(error)
+                        else resolve(uploadedFile.secure_url);
+                    }
+                ).end(req.file.buffer)
+            });
+
+            imageUrl = result;
+        }
+
         const updatePet = await Pet.findByIdAndUpdate(id, {
-            type, name, age, image, gender, weight, breed
+            type, name, age, image: imageUrl, gender, weight, breed
         }, {
             new: true,
-            runValidator: true
+            runValidators: true
         })
         if (!updatePet) {
             return res.status(400).json({ success: false, message: "Updating vet failed!" })

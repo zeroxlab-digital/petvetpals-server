@@ -6,6 +6,6 @@ const petRouter = express.Router();
 
 petRouter.get("/get-pets", userAuthenticated, getPetProfiles)
 petRouter.post("/add-pet", userAuthenticated, upload.single("image"), addPetProfile);
-petRouter.patch("/update-pet/:id", userAuthenticated, updatePetProfile);
+petRouter.patch("/update-pet/:id", userAuthenticated, upload.single("image"), updatePetProfile);
 
 export default petRouter;
