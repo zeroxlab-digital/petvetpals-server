@@ -6,7 +6,7 @@ const vetRouter = express.Router();
 // vet registration and login routers
 vetRouter.post("/register", registerVet);
 vetRouter.post("/login", loginVet);
-vetRouter.patch("/update/:id", vetAuthenticated, updateVetProfile)
+vetRouter.patch("/update-profile", vetAuthenticated, updateVetProfile)
 vetRouter.post("/logout", vetAuthenticated, vetLogout)
 
 // vet related routers

@@ -21,7 +21,11 @@ const vetSchema = mongoose.Schema({
     },
     image: {
         type: String,
-        default: "",
+        default: null,
+    },
+    banner: {
+        type: String,
+        default: null,
     },
     specialities: {
         type: Array,
@@ -55,11 +59,19 @@ const vetSchema = mongoose.Schema({
         type: String,
         default: null
     },
+    based_in: {
+        type: String,
+        default: null
+    },
+    languages: {
+        type: Array,
+        default: []
+    },
     slots_booked: {
         type: Array,
         default: [],
         required: true
-    }
-}, { timestamp: true, minimize: false })
+    },
+}, { timestamps: true, minimize: false })
 
 export const Vet = mongoose.model("Vet", vetSchema);

@@ -54,22 +54,21 @@ export const loginVet = async (req, res) => {
 export const updateVetProfile = async (req, res) => {
     try {
         const vetId = req.id;
-        const { id } = req.params;
-        if (vetId !== id) {
-            return res.status(400).json({ message: "Vet is not authenticated!" });
-        }
-        const { fullName, fees, gender, image, about, experience_years, experiences, degrees, specialities, works_at } = req.body;;
-        const updateVet = await Vet.findByIdAndUpdate(id , {
+        const { fullName, fees, gender, image, banner, about, experience_years, experiences, degrees, specialities, works_at, languages, based_in } = req.body;;
+        const updateVet = await Vet.findByIdAndUpdate({ _id: vetId }, {
             fullName,
             fees,
             gender,
             image,
+            banner,
             about,
             experience_years,
             experiences,
             degrees,
             specialities,
-            works_at
+            works_at,
+            languages,
+            based_in
         }, { new: true, runValidator: true })
         if (!updateVet) {
             res.status(400).json({ message: "Updating vet failed!", success: false })

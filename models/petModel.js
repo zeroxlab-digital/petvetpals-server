@@ -37,5 +37,5 @@ const petSchema = mongoose.Schema({
         type: Number,
         required: false
     }
-})
+}, { timestamps: true })
 export const Pet = mongoose.model("Pet", petSchema);
