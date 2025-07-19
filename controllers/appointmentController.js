@@ -45,14 +45,14 @@ export const bookAppointment = async (req, res) => {
 export const updateAppointment = async (req, res) => {
     try {
         const { id } = req.params;
-        const { pet, purpose, payment_status, status } = req.body;
+        const { pet, purpose, payment_status, status, date } = req.body;
         const updateAppt = await Appointment.findByIdAndUpdate({ _id: id }, {
-            pet, purpose, payment_status, status
+            pet, purpose, payment_status, status, date
         }, { new: true, runValidators: true });
         if(!updateAppt) {
             return res.status(400).json({ success: false, message: "Could not update the appointment!" });
         }
-        res.status(200).json({ success: true, message: "Appointment updated successfully!" });
+        res.status(200).json({ success: true, message: "Appointment updated successfully!", updateAppt });
     } catch (error) {
         console.log(error.message);
         res.status(500).json({ message: "Internal server error", error });
