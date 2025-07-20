@@ -118,10 +118,27 @@ export const getMedications = async (req, res) => {
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const medications = await Medication.find({ pet: petId });
+        const medications = await Medication.find({ pet: petId }).populate("prescribed_by", "fullName").populate("pet", "name type age").select("-__v");
         res.status(200).json({ success: true, medications });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });
     }
+}
+
+export const deleteMedication = async (req, res) => {
+    try {
+        const { id } = req.query;
+        if (!id) {
+            return res.status(400).json({ message: "Pet ID is required!" });
+        }
+        const deleted_medication = await Medication.findOneAndDelete({ _id: id });
+        if(!deleted_medication) {
+            return res.status(400).json({ success: false, message: "Medication could not be deleted!" });
+        }
+        res.status(200).json({ success: true, message: "Medication deleted successfully!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }   
 }
