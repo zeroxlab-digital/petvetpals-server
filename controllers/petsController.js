@@ -91,16 +91,20 @@ export const updatePetProfile = async (req, res) => {
 
 export const addMedication = async (req, res) => {
     try {
-        const { petId, medication, dosage, freequency, prescribed_by } = req.body;
+        const { petId } = req.query;
+        if (!petId) {
+            return res.status(400).json({ message: "Pet ID is required!" });
+        }
+        const { medication, dosage, frequency, prescribed_by } = req.body;
 
-        if (!petId || !medication || !dosage || !freequency ) {
+        if (!medication || !dosage || !frequency ) {
             return res.status(400).json({ message: "All fields are required!" });
         }
         const newMedication = await Medication.create({
             pet: petId,
             medication,
             dosage,
-            freequency,
+            frequency,
             next_due: new Date(),
             start_date: new Date(),
             prescribed_by
@@ -141,4 +145,29 @@ export const deleteMedication = async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });
     }   
+}
+
+export const updateMedication = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const { medication, dosage, frequency, is_ongoing, prescribed_by } = req.body;
+
+        const updatedMedication = await Medication.findByIdAndUpdate(id, {
+            medication,
+            dosage,
+            frequency,
+            is_ongoing,
+            prescribed_by
+        }, {
+            new: true,
+            runValidators: true
+        });
+        if (!updatedMedication) {
+            return res.status(400).json({ success: false, message: "Updating medication failed!" });
+        }
+        res.status(200).json({ success: true, message: "Medication updated successfully!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
 }

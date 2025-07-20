@@ -14,7 +14,7 @@ const medicationSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    freequency: {
+    frequency: {
         type: String,
         required: true
     },
@@ -34,6 +34,11 @@ const medicationSchema = mongoose.Schema({
     end_date: {
         type: Date,
         required: false
+    },
+    is_ongoing: {
+        type: Boolean,
+        default: true,
+        required: true
     },
     notes: {
         type: String,
