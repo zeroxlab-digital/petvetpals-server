@@ -157,6 +157,7 @@ export const updateMedication = async (req, res) => {
             dosage,
             frequency,
             is_ongoing,
+            end_date: is_ongoing ? null : new Date(),
             prescribed_by
         }, {
             new: true,
