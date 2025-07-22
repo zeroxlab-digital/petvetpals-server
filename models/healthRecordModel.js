@@ -63,11 +63,12 @@ const vaccinationSchema = new Schema({
     },
     date_given: {
         type: Date,
+        default: new Date(),
         required: true
     },
     next_due: {
         type: Date,
-        required: true
+        required: false
     },
     status: {
         type: String,

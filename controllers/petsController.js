@@ -2,7 +2,7 @@ import { Pet } from "../models/petModel.js";
 import { v2 as cloudinary } from "cloudinary";
 import connectCloudinary from "../config/cloudinary.js"; // Import the config function to upload file
 import { Medication } from "../models/medicationsModel.js";
-import { MedicalHistory } from "../models/healthRecordModel.js";
+import { MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
 
 connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
 
@@ -90,6 +90,7 @@ export const updatePetProfile = async (req, res) => {
     }
 }
 
+// Pet Medications
 export const addMedication = async (req, res) => {
     try {
         const { petId } = req.query;
@@ -175,6 +176,7 @@ export const updateMedication = async (req, res) => {
 }
 
 // Pet Health Record
+// Medical History
 export const addMedicalHistory = async (req, res) => {
     try {
         const { petId } = req.query;
@@ -216,6 +218,132 @@ export const getMedicalHistory = async (req, res) => {
             .populate("pet", "name type age")
             .select("-__v");
         res.status(200).json({ success: true, medicalHistory });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const updateMedicalHistory = async (req, res) => {
+    try {
+        const { id } = req.query;
+        console.log("Medical ID:", id)
+        const { type, diagnosis, treatment, vetId, date, file, description, notes } = req.body;
+
+        const updatedMedicalHistory = await MedicalHistory.findByIdAndUpdate({_id: id}, {
+            type,
+            diagnosis,
+            treatment,
+            vet: vetId,
+            date,
+            file,
+            description,
+            notes
+        }, {
+            new: true,
+            runValidators: true
+        });
+        console.log("Updated Medical history:", updatedMedicalHistory)
+        if (!updatedMedicalHistory) {
+            return res.status(400).json({ success: false, message: "Updating medical history failed!" });
+        }
+        res.status(200).json({ success: true, message: "Medical history updated successfully!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const deleteMedicalHistory = async (req, res) => {
+    try {
+        const { id } = req.query;
+        if (!id) {
+            return res.status(400).json({ message: "Medical history ID is required!" });
+        }
+        const deletedMedicalHistory = await MedicalHistory.findOneAndDelete({ _id: id });
+        if (!deletedMedicalHistory) {
+            return res.status(400).json({ success: false, message: "Medical history could not be deleted!" });
+        }
+        res.status(200).json({ success: true, message: "Medical history deleted successfully!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+
+// Vaccinations
+export const addVaccination = async (req, res) => {
+    try {
+        const { id } = req.query;
+        if (!id) {
+            return res.status(400).json({ message: "Pet ID is required!" });
+        }
+        const { vaccine, provider, date_given, next_due, status, notes } = req.body;
+        if (!vaccine || !provider) {
+            return res.status(400).json({ message: "All fields are required!" });
+        }
+        const newVaccination = await Vaccination.create({
+            pet: id,
+            vaccine,
+            provider,
+            date_given
+        });
+        res.status(201).json({ success: true, message: "Vaccination added successfully!", newVaccination });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const getVaccinations = async (req, res) => {
+    try {
+        const { id } = req.query;
+        if (!id) {
+            return res.status(400).json({ message: "Pet ID is required!" });
+        }
+        const vaccinations = await Vaccination.find({ pet: id })
+            .populate("provider", "fullName")
+            .populate("pet", "name type age")
+            .select("-__v");
+        res.status(200).json({ success: true, vaccinations });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const deleteVaccination = async (req, res) => {
+    try {
+        const { id } = req.query;
+        if (!id) {
+            return res.status(400).json({ message: "Vaccination ID is required!" });
+        }
+        const deletedVaccination = await Vaccination.findOneAndDelete({ _id: id });
+        if (!deletedVaccination) {
+            return res.status(400).json({ success: false, message: "Vaccination could not be deleted!" });
+        }
+        res.status(200).json({ success: true, message: "Vaccination deleted successfully!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const updateVaccination = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const { vaccine, provider, date_given, next_due, status, notes } = req.body;
+
+        const updatedVaccination = await Vaccination.findByIdAndUpdate(id, {
+            vaccine,
+            provider,
+            date_given,
+            next_due,
+            status,
+            notes
+        }, {
+            new: true,
+            runValidators: true
+        });
+        if (!updatedVaccination) {
+            return res.status(400).json({ success: false, message: "Updating vaccination failed!" });
+        }
+        res.status(200).json({ success: true, message: "Vaccination updated successfully!" });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });

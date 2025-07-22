@@ -1,5 +1,5 @@
 import express from "express";
-import { addMedicalHistory, addMedication, addPetProfile, deleteMedication, getMedicalHistory, getMedications, getPetProfiles, updateMedication, updatePetProfile } from "../controllers/petsController.js";
+import { addMedicalHistory, addMedication, addPetProfile, addVaccination, deleteMedicalHistory, deleteMedication, deleteVaccination, getMedicalHistory, getMedications, getPetProfiles, getVaccinations, updateMedicalHistory, updateMedication, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
 import userAuthenticated from "../middlewares/userAuthenticated.js";
 import upload from "../middlewares/multer.js";
 const petRouter = express.Router();
@@ -18,13 +18,13 @@ petRouter.patch('/medications/update-medication', userAuthenticated, updateMedic
 // Pet Health Records
 petRouter.post('/health-record/add-medical-history', userAuthenticated, addMedicalHistory);
 petRouter.get('/health-record/get-medical-history', userAuthenticated, getMedicalHistory);
-// petRouter.delete('/health-record/delete-medical-history', userAuthenticated, deleteMedicalHistory);
-// petRouter.patch('/health-record/update-medical-history', userAuthenticated, updateMedicalHistory);
+petRouter.delete('/health-record/delete-medical-history', userAuthenticated, deleteMedicalHistory);
+petRouter.patch('/health-record/update-medical-history', userAuthenticated, updateMedicalHistory);
 
-// petRouter.post('/health-record/add-vaccination', userAuthenticated, addVaccination);
-// petRouter.get('/health-record/get-vaccinations', userAuthenticated, getVaccinations);
-// petRouter.delete('/health-record/delete-vaccination', userAuthenticated, deleteVaccination);
-// petRouter.patch('/health-record/update-vaccination', userAuthenticated, updateVaccination);
+petRouter.post('/health-record/add-vaccination', userAuthenticated, addVaccination);
+petRouter.get('/health-record/get-vaccinations', userAuthenticated, getVaccinations);
+petRouter.delete('/health-record/delete-vaccination', userAuthenticated, deleteVaccination);
+petRouter.patch('/health-record/update-vaccination', userAuthenticated, updateVaccination);
 
 // petRouter.post('/health-record/add-allergy-condition', userAuthenticated, addAllergyCondition);
 // petRouter.get('/health-record/get-allergy-conditions', userAuthenticated, getAllergyConditions);
