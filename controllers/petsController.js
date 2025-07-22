@@ -2,7 +2,7 @@ import { Pet } from "../models/petModel.js";
 import { v2 as cloudinary } from "cloudinary";
 import connectCloudinary from "../config/cloudinary.js"; // Import the config function to upload file
 import { Medication } from "../models/medicationsModel.js";
-import { MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
+import { AllergyCondition, MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
 
 connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
 
@@ -229,7 +229,7 @@ export const updateMedicalHistory = async (req, res) => {
         console.log("Medical ID:", id)
         const { type, diagnosis, treatment, vetId, date, file, description, notes } = req.body;
 
-        const updatedMedicalHistory = await MedicalHistory.findByIdAndUpdate({_id: id}, {
+        const updatedMedicalHistory = await MedicalHistory.findByIdAndUpdate({ _id: id }, {
             type,
             diagnosis,
             treatment,
@@ -344,6 +344,85 @@ export const updateVaccination = async (req, res) => {
             return res.status(400).json({ success: false, message: "Updating vaccination failed!" });
         }
         res.status(200).json({ success: true, message: "Vaccination updated successfully!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+
+// Allergy Conditions
+export const addAllergyCondition = async (req, res) => {
+    try {
+        const { petId } = req.query;
+        if (!petId) {
+            return res.status(400).json({ message: "Pet ID is required!" });
+        }
+        const { type, name, description } = req.body;
+        if (!type || !name) {
+            return res.status(400).json({ message: "All fields are required!" });
+        }
+        const newAllergyCondition = await AllergyCondition.create({
+            pet: petId,
+            type,
+            name,
+            description
+        });
+        res.status(201).json({ success: true, message: "Allergy/condition added successfully!", newAllergyCondition });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const getAllergiesConditions = async (req, res) => {
+    try {
+        const { petId } = req.query;
+        if (!petId) {
+            return res.status(400).json({ message: "Pet ID is required!" });
+        }
+        const allergiesConditions = await AllergyCondition.find({ pet: petId })
+            .populate("pet", "name type age")
+            .select("-__v");
+        res.status(200).json({ success: true, allergiesConditions });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const deleteAllergyCondition = async (req, res) => {
+    try {
+        const { id } = req.query;
+        if (!id) {
+            return res.status(400).json({ message: "Allergy condition ID is required!" });
+        }
+        const deletedAllergyCondition = await AllergyCondition.findOneAndDelete({ _id: id });
+        if (!deletedAllergyCondition) {
+            return res.status(400).json({ success: false, message: "Allergy condition could not be deleted!" });
+        }
+        res.status(200).json({ success: true, message: "Allergy condition deleted successfully!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const updateAllergyCondition = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const { type, name, severity, diagnosedDate, description } = req.body;
+
+        const updatedAllergyCondition = await AllergyCondition.findByIdAndUpdate(id, {
+            type,
+            name,
+            severity,
+            diagnosedDate,
+            description
+        }, {
+            new: true,
+            runValidators: true
+        });
+        if (!updatedAllergyCondition) {
+            return res.status(400).json({ success: false, message: "Updating allergy condition failed!" });
+        }
+        res.status(200).json({ success: true, message: "Allergy condition updated successfully!" });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });

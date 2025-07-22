@@ -1,5 +1,5 @@
 import express from "express";
-import { addMedicalHistory, addMedication, addPetProfile, addVaccination, deleteMedicalHistory, deleteMedication, deleteVaccination, getMedicalHistory, getMedications, getPetProfiles, getVaccinations, updateMedicalHistory, updateMedication, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
+import { addAllergyCondition, addMedicalHistory, addMedication, addPetProfile, addVaccination, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteVaccination, getAllergiesConditions, getMedicalHistory, getMedications, getPetProfiles, getVaccinations, updateAllergyCondition, updateMedicalHistory, updateMedication, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
 import userAuthenticated from "../middlewares/userAuthenticated.js";
 import upload from "../middlewares/multer.js";
 const petRouter = express.Router();
@@ -26,9 +26,9 @@ petRouter.get('/health-record/get-vaccinations', userAuthenticated, getVaccinati
 petRouter.delete('/health-record/delete-vaccination', userAuthenticated, deleteVaccination);
 petRouter.patch('/health-record/update-vaccination', userAuthenticated, updateVaccination);
 
-// petRouter.post('/health-record/add-allergy-condition', userAuthenticated, addAllergyCondition);
-// petRouter.get('/health-record/get-allergy-conditions', userAuthenticated, getAllergyConditions);
-// petRouter.delete('/health-record/delete-allergy-condition', userAuthenticated, deleteAllergyCondition);
-// petRouter.patch('/health-record/update-allergy-condition', userAuthenticated, updateAllergyCondition);
+petRouter.post('/health-record/add-allergy-condition', userAuthenticated, addAllergyCondition);
+petRouter.get('/health-record/get-allergies-conditions', userAuthenticated, getAllergiesConditions);
+petRouter.delete('/health-record/delete-allergy-condition', userAuthenticated, deleteAllergyCondition);
+petRouter.patch('/health-record/update-allergy-condition', userAuthenticated, updateAllergyCondition);
 
 export default petRouter;

@@ -82,3 +82,37 @@ const vaccinationSchema = new Schema({
     }
 }, { timestamps: true });
 export const Vaccination = model('Vaccination', vaccinationSchema);
+
+// Allergy Condition Schema
+const allergyConditionSchema = new Schema({
+    pet: {
+        type: Schema.Types.ObjectId,
+        ref: 'Pet',
+        required: true
+    },
+    type: {
+        type: String,
+        enum: ['allergy', 'condition'],
+        required: true
+    },
+    name: {
+        type: String,
+        required: true
+    },
+    severity: {
+        type: String,
+        enum: ['mild', 'moderate', 'severe'],
+        default: 'mild',
+        required: true
+    },
+    diagnosedDate: {
+        type: Date,
+        default: new Date(),
+        required: true
+    },
+    description: {
+        type: String,
+        default: null
+    }
+}, { timestamps: true });
+export const AllergyCondition = model('AllergyCondition', allergyConditionSchema);
