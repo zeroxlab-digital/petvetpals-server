@@ -2,6 +2,7 @@ import { Pet } from "../models/petModel.js";
 import { v2 as cloudinary } from "cloudinary";
 import connectCloudinary from "../config/cloudinary.js"; // Import the config function to upload file
 import { Medication } from "../models/medicationsModel.js";
+import { MedicalHistory } from "../models/healthRecordModel.js";
 
 connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
 
@@ -97,7 +98,7 @@ export const addMedication = async (req, res) => {
         }
         const { medication, dosage, frequency, prescribed_by } = req.body;
 
-        if (!medication || !dosage || !frequency ) {
+        if (!medication || !dosage || !frequency) {
             return res.status(400).json({ message: "All fields are required!" });
         }
         const newMedication = await Medication.create({
@@ -137,14 +138,14 @@ export const deleteMedication = async (req, res) => {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
         const deleted_medication = await Medication.findOneAndDelete({ _id: id });
-        if(!deleted_medication) {
+        if (!deleted_medication) {
             return res.status(400).json({ success: false, message: "Medication could not be deleted!" });
         }
         res.status(200).json({ success: true, message: "Medication deleted successfully!" });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });
-    }   
+    }
 }
 
 export const updateMedication = async (req, res) => {
@@ -167,6 +168,54 @@ export const updateMedication = async (req, res) => {
             return res.status(400).json({ success: false, message: "Updating medication failed!" });
         }
         res.status(200).json({ success: true, message: "Medication updated successfully!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+
+// Pet Health Record
+export const addMedicalHistory = async (req, res) => {
+    try {
+        const { petId } = req.query;
+        if (!petId) {
+            return res.status(400).json({ message: "Pet ID is required!" });
+        }
+        const { type, diagnosis, treatment, vetId, date, file, description, notes } = req.body;
+        if (!vetId) {
+            return res.status(400).json({ message: "Vet ID is required!" });
+        }
+        if (!type || !diagnosis) {
+            return res.status(400).json({ message: "All fields are required!" });
+        }
+        const newMedicalHistory = await MedicalHistory.create({
+            pet: petId,
+            vet: vetId,
+            type,
+            diagnosis: diagnosis || "None required",
+            treatment,
+            date,
+            file,
+            description,
+            notes
+        });
+        res.status(200).json({ success: true, message: "Health record added successfully!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const getMedicalHistory = async (req, res) => {
+    try {
+        const { petId } = req.query;
+        if (!petId) {
+            return res.status(400).json({ message: "Pet ID is required!" });
+        }
+        const medicalHistory = await MedicalHistory.find({ pet: petId })
+            .populate("vet", "fullName")
+            .populate("pet", "name type age")
+            .select("-__v");
+        res.status(200).json({ success: true, medicalHistory });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });
