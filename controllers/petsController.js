@@ -272,8 +272,8 @@ export const deleteMedicalHistory = async (req, res) => {
 // Vaccinations
 export const addVaccination = async (req, res) => {
     try {
-        const { id } = req.query;
-        if (!id) {
+        const { petId } = req.query;
+        if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
         const { vaccine, provider, date_given, next_due, status, notes } = req.body;
@@ -281,7 +281,7 @@ export const addVaccination = async (req, res) => {
             return res.status(400).json({ message: "All fields are required!" });
         }
         const newVaccination = await Vaccination.create({
-            pet: id,
+            pet: petId,
             vaccine,
             provider,
             date_given
@@ -294,11 +294,11 @@ export const addVaccination = async (req, res) => {
 }
 export const getVaccinations = async (req, res) => {
     try {
-        const { id } = req.query;
-        if (!id) {
+        const { petId } = req.query;
+        if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const vaccinations = await Vaccination.find({ pet: id })
+        const vaccinations = await Vaccination.find({ pet: petId })
             .populate("provider", "fullName")
             .populate("pet", "name type age")
             .select("-__v");
