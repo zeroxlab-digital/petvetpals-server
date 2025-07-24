@@ -96,8 +96,7 @@ const scheduleReminderSchema = mongoose.Schema({
     },
     reminder_methods: {
         type: [String],
-        enum: ["push-notification", "in-app alert"],
-        default: ["push-notification"],
+        enum: ["push", "in-app"],
         required: false
     },
     repeat_reminder: {

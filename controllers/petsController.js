@@ -177,9 +177,9 @@ export const updateMedication = async (req, res) => {
 // Medication Schedule Reminder
 export const addMedScheduleReminder = async (req, res) => {
     try {
-        const { petId, medId } = req.query;
-        const { frequency, starting_date, end_date, reminder_time, remind_before, reminder_methods, repeat_reminder } = req.body;
-        if (!frequency || !reminder_time) {
+        const { petId } = req.query;
+        const { medId, frequency, starting_date, end_date, reminder_time, remind_before, reminder_methods, repeat_reminder } = req.body;
+        if (!medId, !frequency || !reminder_time) {
             return res.status(400).json({ success: true, message: "All fields are required!" });
         }
         const newScheduleReminder = await ScheduleReminder.create({
