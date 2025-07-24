@@ -58,3 +58,51 @@ const medicationSchema = mongoose.Schema({
 }, { timestamps: true })
 
 export const Medication = mongoose.model("Medication", medicationSchema);
+
+// Schedule & Reminders
+const scheduleReminderSchema = mongoose.Schema({
+    pet: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Pet",
+        required: true
+    },
+    medication: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Medication",
+        required: true
+    },
+    frequency: {
+        type: String,
+        required: false
+    },
+    starting_date: {
+        type: Date,
+        required: true,
+        default: new Date()
+    },
+    end_date: {
+        type: Date,
+        required: false,
+        default: null
+    },
+    reminder_time: {
+        type: Date,
+        required: true
+    },
+    remind_before: {
+        type: String,
+        required: true
+    },
+    reminder_methods: {
+        type: [String],
+        enum: ["push-notification", "in-app alert"],
+        default: ["push-notification"],
+        required: false
+    },
+    repeat_reminder: {
+        type: Boolean,
+        default: false,
+        required: false
+    }
+}, { timestamps: true })
+export const ScheduleReminder = mongoose.model("ScheduleReminder", scheduleReminderSchema);
