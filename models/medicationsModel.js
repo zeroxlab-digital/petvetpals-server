@@ -91,7 +91,8 @@ const scheduleReminderSchema = mongoose.Schema({
     },
     remind_before: {
         type: String,
-        default: "15",
+        enum: ['5', '10', '15', '30', '60'],
+        default: "10",
         required: false
     },
     reminder_methods: {
@@ -100,6 +101,11 @@ const scheduleReminderSchema = mongoose.Schema({
         required: false
     },
     repeat_reminder: {
+        type: Boolean,
+        default: false,
+        required: false
+    },
+    is_given: {
         type: Boolean,
         default: false,
         required: false
