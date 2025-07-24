@@ -1,7 +1,7 @@
 import { Pet } from "../models/petModel.js";
 import { v2 as cloudinary } from "cloudinary";
 import connectCloudinary from "../config/cloudinary.js"; // Import the config function to upload file
-import { Medication } from "../models/medicationsModel.js";
+import { Medication, ScheduleReminder } from "../models/medicationsModel.js";
 import { AllergyCondition, MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
 
 connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
@@ -169,6 +169,42 @@ export const updateMedication = async (req, res) => {
             return res.status(400).json({ success: false, message: "Updating medication failed!" });
         }
         res.status(200).json({ success: true, message: "Medication updated successfully!" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+// Medication Schedule Reminder
+export const addMedScheduleReminder = async (req, res) => {
+    try {
+        const { petId, medId } = req.query;
+        const { frequency, starting_date, end_date, reminder_time, remind_before, reminder_methods, repeat_reminder } = req.body;
+        if (!frequency || !reminder_time) {
+            return res.status(400).json({ success: true, message: "All fields are required!" });
+        }
+        const newScheduleReminder = await ScheduleReminder.create({
+            pet: petId,
+            medication: medId,
+            frequency, starting_date, end_date, reminder_time, remind_before, reminder_methods, repeat_reminder
+        });
+        console.log(newScheduleReminder);
+        if (!newScheduleReminder) {
+            return res.status(500).json({ success: false, message: "There was an error while trying to set schedule reminder!" })
+        };
+        res.status(201).json({ success: true, newScheduleReminder })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const getMedScheduledReminders = async (req, res) => {
+    try {
+        const { petId } = req.query;
+        if (!petId) {
+            return res.status(404).json({ success: false, message: "Pet ID is required!" })
+        }
+        const scheduledReminders = await ScheduleReminder.find({ pet: petId }).populate("medication").select("-__v")
+        res.status(200).json({ success: true, scheduledReminders });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });

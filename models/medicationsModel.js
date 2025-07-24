@@ -86,12 +86,13 @@ const scheduleReminderSchema = mongoose.Schema({
         default: null
     },
     reminder_time: {
-        type: Date,
+        type: String,
         required: true
     },
     remind_before: {
         type: String,
-        required: true
+        default: "15",
+        required: false
     },
     reminder_methods: {
         type: [String],
