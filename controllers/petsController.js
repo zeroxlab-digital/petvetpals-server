@@ -357,7 +357,7 @@ export const addAllergyCondition = async (req, res) => {
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const { type, name, description } = req.body;
+        const { type, name, severity, diagnosedDate, description } = req.body;
         if (!type || !name) {
             return res.status(400).json({ message: "All fields are required!" });
         }
@@ -365,6 +365,8 @@ export const addAllergyCondition = async (req, res) => {
             pet: petId,
             type,
             name,
+            severity,
+            diagnosedDate,
             description
         });
         res.status(201).json({ success: true, message: "Allergy/condition added successfully!", newAllergyCondition });
