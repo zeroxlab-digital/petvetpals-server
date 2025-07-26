@@ -10,6 +10,7 @@ import appointmentRouter from "../routes/appointmentRouter.js";
 import petRouter from "../routes/petRouter.js";
 import messageRouter from "../routes/messenger/messeageRoute.js";
 import serverless from "serverless-http";
+import symptomRouter from "../routes/symptom-checker/symptomRoutes.js";
 configDotenv();
 
 // server config
@@ -45,6 +46,8 @@ app.use("/api/vet", vetRouter);
 app.use("/api/user", userRouter);
 app.use("/api/appointment", appointmentRouter);
 app.use("/api/pet", petRouter);
+// Symptom router
+app.use("/api/symptoms", symptomRouter)
 
 // Routes for the messenger between pet owner and vet :)
 app.use("/api/message", messageRouter);
