@@ -78,7 +78,7 @@ const scheduleReminderSchema = mongoose.Schema({
     starting_date: {
         type: Date,
         required: true,
-        default: new Date()
+        default: null
     },
     end_date: {
         type: Date,

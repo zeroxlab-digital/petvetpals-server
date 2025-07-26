@@ -230,7 +230,7 @@ export const markGivenMedScheduledReminder = async (req, res) => {
             return res.status(400).json({ success: false, message: "Scheduled Reminder ID is required!"})
         }
         await ScheduleReminder.findByIdAndUpdate({ _id: id }, {
-            isGiven: true
+            is_given: true
         })
         res.status(200).json({ success: true, message: "Medication marked as given!" })
     } catch (error) {
