@@ -46,7 +46,7 @@ export const loginVet = async (req, res) => {
         const vet_token = await jwt.sign(tokenData, process.env.JWT_SECRET_KEY, { expiresIn: '1d' });
         res.status(200).cookie("vet_token", vet_token, { maxAge: 1 * 24 * 60 * 60 * 1000, 
             // Comment this line below for in localhost run
-            // sameSite: 'none', secure: process.env.NODE_ENV === "production" 
+            sameSite: 'none', secure: process.env.NODE_ENV === "production" 
         }).json({ status: "success", message: "Login successfull!", vetData })
     } catch (error) {
         console.log(error);
