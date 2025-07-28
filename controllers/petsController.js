@@ -213,8 +213,8 @@ export const getMedScheduledReminders = async (req, res) => {
 export const deleteMedScheduledReminder = async (req, res) => {
     try {
         const { id } = req.query;
-        if(!id) {
-            return res.status(400).json({ success: false, message: "Scheduled Reminder ID is required!"})
+        if (!id) {
+            return res.status(400).json({ success: false, message: "Scheduled Reminder ID is required!" })
         }
         await ScheduleReminder.findOneAndDelete({ _id: id });
         res.status(200).json({ success: true, message: "Scheduled reminder deleted successfully!" })
@@ -223,11 +223,31 @@ export const deleteMedScheduledReminder = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error });
     }
 }
+export const updateMedScheduledReminder = async (req, res) => {
+    try {
+        const { id } = req.query;
+        if (!id) {
+            return res.status(400).json({ success: false, message: "Scheduled Reminder ID is required!" })
+        }
+        const { medId, frequency, starting_date, end_date, reminder_time, remind_before, reminder_methods, repeat_reminder } = req.body;
+        const updatedScheduleReminder = await ScheduleReminder.findByIdAndUpdate({_id: id}, {
+            medication: medId,
+            frequency, starting_date, end_date, reminder_time, remind_before, reminder_methods, repeat_reminder
+        });
+        if (!updatedScheduleReminder) {
+            return res.status(500).json({ success: false, message: "There was an error while trying to set schedule reminder!" })
+        };
+        res.status(200).json({ success: true, updatedScheduleReminder })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
 export const markGivenMedScheduledReminder = async (req, res) => {
     try {
         const { id } = req.query;
-        if(!id) {
-            return res.status(400).json({ success: false, message: "Scheduled Reminder ID is required!"})
+        if (!id) {
+            return res.status(400).json({ success: false, message: "Scheduled Reminder ID is required!" })
         }
         await ScheduleReminder.findByIdAndUpdate({ _id: id }, {
             is_given: true
