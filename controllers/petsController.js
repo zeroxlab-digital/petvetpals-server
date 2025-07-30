@@ -97,9 +97,9 @@ export const addMedication = async (req, res) => {
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const { medication, dosage, frequency, prescribed_by } = req.body;
+        const { medication, dosage, frequency, remaining, start_date, end_date, next_due, is_ongoing, reason, timeOfDay, prescribed_by, instructions, } = req.body;
 
-        if (!medication || !dosage || !frequency) {
+        if (!medication || !dosage || !frequency || !start_date) {
             return res.status(400).json({ message: "All fields are required!" });
         }
         const newMedication = await Medication.create({
@@ -107,9 +107,15 @@ export const addMedication = async (req, res) => {
             medication,
             dosage,
             frequency,
-            next_due: new Date(),
-            start_date: new Date(),
-            prescribed_by
+            time_of_day: timeOfDay,
+            remaining,
+            next_due,
+            start_date,
+            end_date,
+            is_ongoing,
+            reason,
+            prescribed_by,
+            instructions
         })
         res.status(201).json({ success: true, message: "Medication added successfully!", newMedication });
     } catch (error) {
@@ -362,13 +368,16 @@ export const addVaccination = async (req, res) => {
         }
         const { vaccine, provider, date_given, next_due, status, notes } = req.body;
         if (!vaccine || !provider) {
-            return res.status(400).json({ message: "All fields are required!" });
+            return res.status(400).json({ message: "Vaccine and provider is required" });
         }
         const newVaccination = await Vaccination.create({
             pet: petId,
             vaccine,
             provider,
-            date_given
+            date_given,
+            next_due,
+            status,
+            notes
         });
         res.status(201).json({ success: true, message: "Vaccination added successfully!", newVaccination });
     } catch (error) {

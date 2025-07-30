@@ -25,7 +25,7 @@ const medicationSchema = mongoose.Schema({
     },
     next_due: {
         type: Date,
-        required: true
+        required: false
     },
     start_date: {
         type: Date,
@@ -40,7 +40,12 @@ const medicationSchema = mongoose.Schema({
         default: true,
         required: true
     },
-    notes: {
+    reason: {
+        type: String,
+        default: null,
+        required: false
+    },
+    time_of_day: {
         type: String,
         default: null,
         required: false
