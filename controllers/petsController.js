@@ -184,25 +184,74 @@ export const updateMedication = async (req, res) => {
 export const addMedScheduleReminder = async (req, res) => {
     try {
         const { petId } = req.query;
-        const { medId, frequency, starting_date, end_date, reminder_time, remind_before, reminder_methods, repeat_reminder } = req.body;
-        if (!medId, !frequency || !reminder_time) {
-            return res.status(400).json({ success: true, message: "All fields are required!" });
+        const {
+            medId,
+            frequency,
+            starting_date,
+            end_date,
+            reminder_times,
+            reminder_methods,
+            repeat_reminder
+        } = req.body;
+
+        if (!petId || !medId || !frequency || !reminder_times?.length) {
+            return res.status(400).json({ success: false, message: "Required fields are missing!" });
         }
+
         const newScheduleReminder = await ScheduleReminder.create({
             pet: petId,
             medication: medId,
-            frequency, starting_date, end_date, reminder_time, remind_before, reminder_methods, repeat_reminder
+            frequency,
+            starting_date,
+            end_date,
+            reminder_times,
+            reminder_methods,
+            repeat_reminder
         });
-        console.log(newScheduleReminder);
-        if (!newScheduleReminder) {
-            return res.status(500).json({ success: false, message: "There was an error while trying to set schedule reminder!" })
-        };
-        res.status(201).json({ success: true, newScheduleReminder })
+
+        res.status(201).json({ success: true, newScheduleReminder });
     } catch (error) {
-        console.log(error);
+        console.error("Error creating reminder:", error);
         res.status(500).json({ message: "Internal server error", error });
     }
-}
+};
+export const updateMedScheduledReminder = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const {
+            medId,
+            frequency,
+            starting_date,
+            end_date,
+            reminder_times,
+            reminder_methods,
+            repeat_reminder
+        } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ success: false, message: "Schedule ID is required!" });
+        }
+
+        const updatedScheduleReminder = await ScheduleReminder.findByIdAndUpdate(
+            id,
+            {
+                medication: medId,
+                frequency,
+                starting_date,
+                end_date,
+                reminder_times,
+                reminder_methods,
+                repeat_reminder
+            },
+            { new: true }
+        );
+
+        res.status(200).json({ success: true, updatedScheduleReminder });
+    } catch (error) {
+        console.error("Error updating reminder:", error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+};
 export const getMedScheduledReminders = async (req, res) => {
     try {
         const { petId } = req.query;
@@ -224,26 +273,6 @@ export const deleteMedScheduledReminder = async (req, res) => {
         }
         await ScheduleReminder.findOneAndDelete({ _id: id });
         res.status(200).json({ success: true, message: "Scheduled reminder deleted successfully!" })
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
-    }
-}
-export const updateMedScheduledReminder = async (req, res) => {
-    try {
-        const { id } = req.query;
-        if (!id) {
-            return res.status(400).json({ success: false, message: "Scheduled Reminder ID is required!" })
-        }
-        const { medId, frequency, starting_date, end_date, reminder_time, remind_before, reminder_methods, repeat_reminder } = req.body;
-        const updatedScheduleReminder = await ScheduleReminder.findByIdAndUpdate({_id: id}, {
-            medication: medId,
-            frequency, starting_date, end_date, reminder_time, remind_before, reminder_methods, repeat_reminder
-        });
-        if (!updatedScheduleReminder) {
-            return res.status(500).json({ success: false, message: "There was an error while trying to set schedule reminder!" })
-        };
-        res.status(200).json({ success: true, updatedScheduleReminder })
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });

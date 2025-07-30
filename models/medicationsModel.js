@@ -90,16 +90,16 @@ const scheduleReminderSchema = mongoose.Schema({
         required: false,
         default: null
     },
-    reminder_time: {
-        type: String,
-        required: true
-    },
-    remind_before: {
-        type: String,
-        enum: ['5', '10', '15', '30', '60'],
-        default: "10",
-        required: false
-    },
+    reminder_times: [
+        {
+            time: { type: String, required: true },
+            remind_before: {
+                type: String,
+                enum: ['0', '5', '10', '15', '30', '60'],
+                default: '10'
+            }
+        }
+    ],
     reminder_methods: {
         type: [String],
         enum: ["push", "in-app"],
@@ -107,13 +107,12 @@ const scheduleReminderSchema = mongoose.Schema({
     },
     repeat_reminder: {
         type: Boolean,
-        default: false,
-        required: false
+        default: false
     },
     is_given: {
         type: Boolean,
-        default: false,
-        required: false
+        default: false
     }
-}, { timestamps: true })
+}, { timestamps: true });
+
 export const ScheduleReminder = mongoose.model("ScheduleReminder", scheduleReminderSchema);
