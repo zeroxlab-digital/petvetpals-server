@@ -3,6 +3,7 @@ import { v2 as cloudinary } from "cloudinary";
 import connectCloudinary from "../config/cloudinary.js"; // Import the config function to upload file
 import { Medication, ScheduleReminder } from "../models/medicationsModel.js";
 import { AllergyCondition, MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
+import moment from "moment";
 
 connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
 
@@ -291,6 +292,70 @@ export const markGivenMedScheduledReminder = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });
+    }
+}
+export const resetMedicationReminders = async (req, res) => {
+    if (req.method !== 'GET') {
+        return res.status(405).json({ message: 'Method not allowed' });
+    }
+    try {
+        const now = moment();
+
+        const reminders = await ScheduleReminder.find();
+
+        let resetCount = 0;
+
+        for (const reminder of reminders) {
+            const now = moment();
+            const start = moment(reminder.starting_date);
+            const frequency = reminder.frequency;
+
+            let updated = false;
+
+            for (const rt of reminder.reminder_times || []) {
+                const [hour, minute] = rt.time.split(':').map(Number);
+                const reminderTimeToday = moment().set({ hour, minute, second: 0, millisecond: 0 });
+
+                const lastReset = reminder.last_reset ? moment(reminder.last_reset) : start;
+
+                let shouldReset = false;
+
+                switch (frequency) {
+                    case 'once_daily':
+                    case 'twice_daily':
+                        shouldReset = now.isAfter(reminderTimeToday) && now.diff(lastReset, 'days') >= 1;
+                        break;
+                    case 'every_other_day':
+                        shouldReset = now.isAfter(reminderTimeToday) &&
+                            now.diff(start, 'days') % 2 === 0 &&
+                            now.diff(lastReset, 'days') >= 1;
+                        break;
+                    case 'once_weekly':
+                        shouldReset = now.isAfter(reminderTimeToday) &&
+                            now.diff(lastReset, 'days') >= 7;
+                        break;
+                    case 'once_monthly':
+                        shouldReset = now.isAfter(reminderTimeToday) &&
+                            now.diff(lastReset, 'months') >= 1;
+                        break;
+                }
+
+                if (shouldReset) {
+                    await ScheduleReminder.findByIdAndUpdate(reminder._id, {
+                        is_given: false,
+                        last_reset: now.toDate()
+                    });
+                    resetCount++;
+                    updated = true;
+                    break; // only reset once per reminder (or loop per time if you change schema)
+                }
+            }
+        }
+
+        return res.status(200).json({ success: true, message: `Reset ${resetCount} reminders.` });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Reminder reset failed", error });
     }
 }
 

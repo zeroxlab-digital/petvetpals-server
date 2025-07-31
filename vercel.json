@@ -11,5 +11,11 @@
       "src": "/(.*)",
       "dest": "api/server.js"
     }
+  ],
+  "cron": [
+    {
+      "path": "api/pet/medications/reset-medication-reminders",
+      "schedule": "0 6 * * *"
+    }
   ]
 }

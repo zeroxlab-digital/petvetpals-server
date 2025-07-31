@@ -112,6 +112,10 @@ const scheduleReminderSchema = mongoose.Schema({
     is_given: {
         type: Boolean,
         default: false
+    },
+    last_reset: {
+        type: Date,
+        default: null
     }
 }, { timestamps: true });
 
