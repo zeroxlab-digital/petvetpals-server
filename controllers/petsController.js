@@ -281,14 +281,21 @@ export const deleteMedScheduledReminder = async (req, res) => {
 }
 export const markGivenMedScheduledReminder = async (req, res) => {
     try {
-        const { id } = req.query;
-        if (!id) {
-            return res.status(400).json({ success: false, message: "Scheduled Reminder ID is required!" })
+        const { id, index } = req.query;
+
+        if (!id || index === undefined) {
+            return res.status(400).json({ success: false, message: "Reminder ID and time index are required." });
         }
-        await ScheduleReminder.findByIdAndUpdate({ _id: id }, {
-            is_given: true
-        })
-        res.status(200).json({ success: true, message: "Medication marked as given!" })
+
+        const reminder = await ScheduleReminder.findById(id);
+        if (!reminder) {
+            return res.status(404).json({ success: false, message: "Reminder not found." });
+        }
+
+        reminder.reminder_times[index].is_given = true;
+        await reminder.save();
+
+        res.status(200).json({ success: true, message: "Reminder marked as given." });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });
@@ -298,66 +305,101 @@ export const resetMedicationReminders = async (req, res) => {
     if (req.method !== 'GET') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
+
     try {
         const now = moment();
-
         const reminders = await ScheduleReminder.find();
 
         let resetCount = 0;
 
         for (const reminder of reminders) {
-            const now = moment();
-            const start = moment(reminder.starting_date);
-            const frequency = reminder.frequency;
+            let reminderUpdated = false;
 
-            let updated = false;
-
-            for (const rt of reminder.reminder_times || []) {
+            for (let i = 0; i < (reminder.reminder_times || []).length; i++) {
+                const rt = reminder.reminder_times[i];
                 const [hour, minute] = rt.time.split(':').map(Number);
-                const reminderTimeToday = moment().set({ hour, minute, second: 0, millisecond: 0 });
 
-                const lastReset = reminder.last_reset ? moment(reminder.last_reset) : start;
+                const reminderTimeToday = moment().set({ hour, minute, second: 0, millisecond: 0 });
+                const lastReset = rt.last_reset ? moment(rt.last_reset) : moment(reminder.starting_date);
 
                 let shouldReset = false;
 
-                switch (frequency) {
+                switch (reminder.frequency) {
                     case 'once_daily':
                     case 'twice_daily':
                         shouldReset = now.isAfter(reminderTimeToday) && now.diff(lastReset, 'days') >= 1;
                         break;
                     case 'every_other_day':
                         shouldReset = now.isAfter(reminderTimeToday) &&
-                            now.diff(start, 'days') % 2 === 0 &&
+                            now.diff(reminder.starting_date, 'days') % 2 === 0 &&
                             now.diff(lastReset, 'days') >= 1;
                         break;
                     case 'once_weekly':
-                        shouldReset = now.isAfter(reminderTimeToday) &&
-                            now.diff(lastReset, 'days') >= 7;
+                        shouldReset = now.isAfter(reminderTimeToday) && now.diff(lastReset, 'days') >= 7;
+                        break;
+                    case 'twice_weekly':
+                        shouldReset = now.isAfter(reminderTimeToday) && now.diff(lastReset, 'days') >= 3;
                         break;
                     case 'once_monthly':
-                        shouldReset = now.isAfter(reminderTimeToday) &&
-                            now.diff(lastReset, 'months') >= 1;
+                        shouldReset = now.isAfter(reminderTimeToday) && now.diff(lastReset, 'months') >= 1;
                         break;
                 }
 
                 if (shouldReset) {
-                    await ScheduleReminder.findByIdAndUpdate(reminder._id, {
-                        is_given: false,
-                        last_reset: now.toDate()
-                    });
+                    reminder.reminder_times[i].is_given = false;
+                    reminder.reminder_times[i].last_reset = now.toDate();
+                    reminderUpdated = true;
                     resetCount++;
-                    updated = true;
-                    break; // only reset once per reminder (or loop per time if you change schema)
                 }
+            }
+
+            if (reminderUpdated) {
+                await reminder.save();
             }
         }
 
-        return res.status(200).json({ success: true, message: `Reset ${resetCount} reminders.` });
+        return res.status(200).json({ success: true, message: `Reset ${resetCount} reminder times.` });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Reminder reset failed", error });
     }
-}
+};
+export const checkReminderNotifications = async (req, res) => {
+    try {
+        const now = moment();
+        const reminders = await ScheduleReminder.find()
+        .populate({path: "medication", select: "medication dosage remaining instructions"})
+        .populate({path: "pet", select: "type name age gender breed"})
+        // console.log(reminders)
+        const dueReminders = [];
+
+        reminders.forEach(reminder => {
+            (reminder.reminder_times || []).forEach((rt, index) => {
+                if (rt.is_given || rt.skipped) return;
+                // console.log("rt:", rt)
+                const [hour, minute] = rt.time.split(":").map(Number);
+                const reminderTime = moment(reminder.starting_date).set({ hour, minute });
+
+                const remindBeforeMins = parseInt(rt.remind_before || '10');
+                const diffMinutes = reminderTime.diff(now, 'minutes');
+                // console.log("reminder:", reminder)
+                if (diffMinutes <= remindBeforeMins && diffMinutes >= remindBeforeMins - 1) {
+                    dueReminders.push({
+                        reminderId: reminder._id,
+                        index,
+                        pet: reminder.pet,
+                        medication: reminder.medication || {},
+                        reminderTime: rt.time
+                    });
+                }
+            });
+        });
+
+        res.status(200).json({ success: true, dueReminders });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
 
 // Pet Health Record
 // Medical History

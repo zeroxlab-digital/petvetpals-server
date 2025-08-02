@@ -97,7 +97,10 @@ const scheduleReminderSchema = mongoose.Schema({
                 type: String,
                 enum: ['0', '5', '10', '15', '30', '60'],
                 default: '10'
-            }
+            },
+            last_reset: { type: Date, default: null },
+            is_given: { type: Boolean, default: false },
+            skipped: { type: Boolean, default: false }
         }
     ],
     reminder_methods: {
@@ -108,14 +111,6 @@ const scheduleReminderSchema = mongoose.Schema({
     repeat_reminder: {
         type: Boolean,
         default: false
-    },
-    is_given: {
-        type: Boolean,
-        default: false
-    },
-    last_reset: {
-        type: Date,
-        default: null
     }
 }, { timestamps: true });
 

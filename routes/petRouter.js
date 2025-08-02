@@ -1,5 +1,5 @@
 import express from "express";
-import { addAllergyCondition, addMedicalHistory, addMedication, addMedScheduleReminder, addPetProfile, addVaccination, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteMedScheduledReminder, deleteVaccination, getAllergiesConditions, getMedicalHistory, getMedications, getMedScheduledReminders, getPetProfiles, getVaccinations, markGivenMedScheduledReminder, resetMedicationReminders, updateAllergyCondition, updateMedicalHistory, updateMedication, updateMedScheduledReminder, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
+import { addAllergyCondition, addMedicalHistory, addMedication, addMedScheduleReminder, addPetProfile, addVaccination, checkReminderNotifications, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteMedScheduledReminder, deleteVaccination, getAllergiesConditions, getMedicalHistory, getMedications, getMedScheduledReminders, getPetProfiles, getVaccinations, markGivenMedScheduledReminder, resetMedicationReminders, updateAllergyCondition, updateMedicalHistory, updateMedication, updateMedScheduledReminder, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
 import userAuthenticated from "../middlewares/userAuthenticated.js";
 import upload from "../middlewares/multer.js";
 const petRouter = express.Router();
@@ -22,6 +22,7 @@ petRouter.delete('/medications/delete-scheduled-reminder', userAuthenticated, de
 petRouter.patch('/medications/update-scheduled-reminder', userAuthenticated, updateMedScheduledReminder);
 petRouter.patch('/medications/markgiven-scheduled-reminder', userAuthenticated, markGivenMedScheduledReminder);
 petRouter.get('/medications/reset-medication-reminders', userAuthenticated, resetMedicationReminders);
+petRouter.get('/medications/check-reminder-notifications', userAuthenticated, checkReminderNotifications);
 
 // Pet Health Records
 petRouter.post('/health-record/add-medical-history', userAuthenticated, addMedicalHistory);

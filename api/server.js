@@ -11,6 +11,10 @@ import petRouter from "../routes/petRouter.js";
 import messageRouter from "../routes/messenger/messeageRoute.js";
 import serverless from "serverless-http";
 import symptomRouter from "../routes/symptom-checker/symptomRoutes.js";
+import cron from "node-cron";
+import axios from "axios";
+import { ScheduleReminder } from "../models/medicationsModel.js";
+import moment from "moment";
 configDotenv();
 
 // server config
@@ -37,6 +41,41 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+// CRON JOB
+// cron.schedule('*/15 * * * *', async () => {
+//     try {
+//         await axios.get(`${process.env.API_BASE}/api/pet/medications/reset-medication-reminders`);
+//         console.log("⏱️ Reminder reset triggered.");
+//     } catch (err) {
+//         console.error("❌ Reminder reset failed:", err);
+//     }
+// });
+cron.schedule('* * * * *', async () => {
+    const now = moment();
+
+    const reminders = await ScheduleReminder.find({}); // maybe narrow scope later
+
+    for (const reminder of reminders) {
+        for (let i = 0; i < reminder.reminder_times.length; i++) {
+            const rt = reminder.reminder_times[i];
+            if (rt.is_given) continue;
+
+            const [hour, minute] = rt.time.split(':').map(Number);
+            const reminderMoment = moment(reminder.starting_date).set({ hour, minute });
+
+            const notifyAt = moment(reminderMoment).subtract(Number(rt.remind_before), 'minutes');
+
+            // Only notify within ±30 seconds to avoid duplicates
+            if (now.isBetween(notifyAt.clone().subtract(30, 'seconds'), notifyAt.clone().add(30, 'seconds'))) {
+                // 🚨 Trigger Notification
+                console.log(`Notify user for Reminder ID ${reminder._id} time ${rt.time}`);
+
+                // You can store a record or push to a socket/in-app queue
+                // OR integrate with push (next step)
+            }
+        }
+    }
+});
 
 // routers
 app.get("/", (req, res) => {
