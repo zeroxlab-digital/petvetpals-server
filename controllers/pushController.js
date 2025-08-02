@@ -67,6 +67,16 @@ export const sendPushNotificationsLogic = async () => {
                     JSON.stringify({
                         title: `💊 ${reminder.medication.medication} Reminder`,
                         message: `🐾 ${reminder.pet.name}'s medication is due at ${reminder.reminderTime} (${reminder.minutesLeft} min left).`,
+                        data: {
+                            reminderId: reminder._id,
+                            index: reminder.index, // index of the reminder_time
+                        },
+                        actions: [
+                            {
+                                action: "mark-as-given",
+                                title: "Mark as Given"
+                            }
+                        ]
                     })
                 );
                 sent++;

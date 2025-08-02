@@ -281,7 +281,8 @@ export const deleteMedScheduledReminder = async (req, res) => {
 }
 export const markGivenMedScheduledReminder = async (req, res) => {
     try {
-        const { id, index } = req.query;
+        const id = req.body?.id || req.query?.id;
+        const index = req.body?.index ?? req.query?.index;
 
         if (!id || index === undefined) {
             return res.status(400).json({ success: false, message: "Reminder ID and time index are required." });
@@ -300,7 +301,8 @@ export const markGivenMedScheduledReminder = async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });
     }
-}
+};
+
 export const resetMedicationReminders = async (req, res) => {
     if (req.method !== 'GET') {
         return res.status(405).json({ message: 'Method not allowed' });
