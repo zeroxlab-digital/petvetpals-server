@@ -15,6 +15,8 @@ import cron from "node-cron";
 import axios from "axios";
 import { ScheduleReminder } from "../models/medicationsModel.js";
 import moment from "moment";
+import pushRouter from "../routes/pushRouter.js";
+import { sendPushNotificationsLogic } from "../controllers/pushController.js";
 configDotenv();
 
 // server config
@@ -76,6 +78,16 @@ cron.schedule('* * * * *', async () => {
         }
     }
 });
+cron.schedule("*/1 * * * *", async () => {
+    console.log("Running reminder push task...");
+    try {
+        const sent = await sendPushNotificationsLogic();
+        console.log(`Sent ${sent} push notifications.`);
+    } catch (err) {
+        console.error("Cron push error:", err);
+    }
+});
+
 
 // routers
 app.get("/", (req, res) => {
@@ -90,6 +102,8 @@ app.use("/api/symptoms", symptomRouter)
 
 // Routes for the messenger between pet owner and vet :)
 app.use("/api/message", messageRouter);
+
+app.use("/api/push", pushRouter);
 
 app.listen(PORT, () => {
     console.log(`The server is running on port: http://localhost:${PORT}`)
