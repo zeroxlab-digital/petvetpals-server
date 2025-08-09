@@ -33,9 +33,11 @@ const petSchema = mongoose.Schema({
         enum: ["male", "female"],
         required: true
     },
-    weight: {
-        type: Number,
-        required: false
-    }
+    weight: [
+        {
+            value: { type: Number, required: true },
+            date: { type: Date, default: Date.now }
+        }
+    ]
 }, { timestamps: true })
 export const Pet = mongoose.model("Pet", petSchema);

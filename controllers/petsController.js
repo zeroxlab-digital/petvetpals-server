@@ -4,9 +4,89 @@ import connectCloudinary from "../config/cloudinary.js"; // Import the config fu
 import { Medication, ScheduleReminder } from "../models/medicationsModel.js";
 import { AllergyCondition, MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
 import moment from "moment";
+import { SymptomReport } from "../models/symptom-checker/SymptomReport.js";
 
 connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
 
+export const getOverallInformation = async (req, res) => {
+    try {
+        const { id } = req.query;
+        console.log("ID:", id);
+
+        const pet = await Pet.findById(id);
+        // console.log("Pet:", pet);
+
+        const upcoming_vaccination = await Vaccination.find({ pet: pet._id, next_due: { $gte: new Date() } }).sort({ next_due: 1 }).limit(1).select("vaccine next_due status notes");
+        // console.log("upcoming vaccination:", upcoming_vaccination);
+
+        const recent_symptoms = await SymptomReport.find({ petId: pet._id }).sort({ createdAt: -1 }).limit(3).select("symptoms conditions");
+        // console.log("recent symptoms:", recent_symptoms)
+
+        const now = new Date();
+        const next_reminder = await ScheduleReminder.aggregate([
+            { $match: { pet: pet._id } },
+            { $unwind: "$reminder_times" },
+
+            // Step 1: Split time string "HH:mm" into hours and minutes
+            {
+                $addFields: {
+                    reminder_hour: {
+                        $toInt: { $arrayElemAt: [{ $split: ["$reminder_times.time", ":"] }, 0] }
+                    },
+                    reminder_minute: {
+                        $toInt: { $arrayElemAt: [{ $split: ["$reminder_times.time", ":"] }, 1] }
+                    }
+                }
+            },
+
+            // Step 2: Build datetime using today's date and reminder time
+            {
+                $addFields: {
+                    reminder_datetime_today: {
+                        $dateFromParts: {
+                            year: { $year: now },
+                            month: { $month: now },
+                            day: { $dayOfMonth: now },
+                            hour: "$reminder_hour",
+                            minute: "$reminder_minute"
+                        }
+                    }
+                }
+            },
+
+            // Step 3: If reminder time is earlier than now, use tomorrow instead
+            {
+                $addFields: {
+                    reminder_datetime: {
+                        $cond: [
+                            { $lte: ["$reminder_datetime_today", now] },
+                            {
+                                $dateAdd: {
+                                    startDate: "$reminder_datetime_today",
+                                    unit: "day",
+                                    amount: 1
+                                }
+                            },
+                            "$reminder_datetime_today"
+                        ]
+                    }
+                }
+            },
+
+            // Step 4: Sort by closest reminder_datetime
+            { $sort: { reminder_datetime: 1 } },
+
+            // Step 5: Limit to the next upcoming one
+            { $limit: 1 },
+        ])
+        // console.log("next reminder:", next_reminder);
+
+        res.status(200).json({ upcoming_vaccination, recent_symptoms, next_reminder });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ succcess: false, message: "Inernal server error", error });
+    }
+}
 
 export const getPetProfiles = async (req, res) => {
     try {
@@ -45,7 +125,12 @@ export const addPetProfile = async (req, res) => {
         }
 
         const petProfile = await Pet.create({
-            user, type, name, age, image: imageUrl, gender, weight, breed
+            user, type, name, age, image: imageUrl, gender, breed,
+            weight: [
+                {
+                    value: weight
+                }
+            ]
         })
         res.status(200).json({ success: true, message: "New pet profile added!", petProfile })
     } catch (error) {
@@ -76,7 +161,13 @@ export const updatePetProfile = async (req, res) => {
         }
 
         const updatePet = await Pet.findByIdAndUpdate(id, {
-            type, name, age, image: imageUrl, gender, weight, breed
+            type, name, age, image: imageUrl, gender, breed,
+            $push: {
+                weight:
+                {
+                    value: weight
+                }
+            }
         }, {
             new: true,
             runValidators: true
@@ -370,8 +461,8 @@ export const checkReminderNotifications = async (req, res) => {
     try {
         const now = moment();
         const reminders = await ScheduleReminder.find()
-        .populate({path: "medication", select: "medication dosage remaining instructions"})
-        .populate({path: "pet", select: "type name age gender breed"})
+            .populate({ path: "medication", select: "medication dosage remaining instructions" })
+            .populate({ path: "pet", select: "type name age gender breed" })
         // console.log(reminders)
         const dueReminders = [];
 
