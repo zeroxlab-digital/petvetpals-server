@@ -5,27 +5,51 @@ import { Medication, ScheduleReminder } from "../models/medicationsModel.js";
 import { AllergyCondition, MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
 import moment from "moment";
 import { SymptomReport } from "../models/symptom-checker/SymptomReport.js";
+import { Appointment } from "../models/appointmentModel.js";
 
 connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
 
 export const getOverallInformation = async (req, res) => {
     try {
+        const userId = req.id;
         const { id } = req.query;
-        console.log("ID:", id);
 
         const pet = await Pet.findById(id);
-        // console.log("Pet:", pet);
 
-        const upcoming_vaccination = await Vaccination.find({ pet: pet._id, next_due: { $gte: new Date() } }).sort({ next_due: 1 }).limit(1).select("vaccine next_due status notes");
-        // console.log("upcoming vaccination:", upcoming_vaccination);
+        const upcoming_vaccination = await Vaccination.findOne({ pet: pet._id, next_due: { $gte: new Date() } }).sort({ next_due: 1 }).limit(1).select("vaccine next_due status notes");
 
         const recent_symptoms = await SymptomReport.find({ petId: pet._id }).sort({ createdAt: -1 }).limit(3).select("symptoms conditions");
-        // console.log("recent symptoms:", recent_symptoms)
 
         const now = new Date();
         const next_reminder = await ScheduleReminder.aggregate([
             { $match: { pet: pet._id } },
             { $unwind: "$reminder_times" },
+            // Populate pet with specific fields
+            {
+                $lookup: {
+                    from: "pets",
+                    let: { petId: "$pet" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$_id", "$$petId"] } } },
+                        { $project: { name: 1, type: 1 } } // name & species from pet
+                    ],
+                    as: "pet"
+                }
+            },
+            { $unwind: "$pet" },
+            // Populate medication with specific fields
+            {
+                $lookup: {
+                    from: "medications",
+                    let: { medicationId: "$medication" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$_id", "$$medicationId"] } } },
+                        { $project: { medication: 1, dosage: 1 } } // name & dosage from medication
+                    ],
+                    as: "medication"
+                }
+            },
+            { $unwind: "$medication" },
 
             // Step 1: Split time string "HH:mm" into hours and minutes
             {
@@ -78,10 +102,19 @@ export const getOverallInformation = async (req, res) => {
 
             // Step 5: Limit to the next upcoming one
             { $limit: 1 },
-        ])
-        // console.log("next reminder:", next_reminder);
+        ]);
 
-        res.status(200).json({ upcoming_vaccination, recent_symptoms, next_reminder });
+        // Not based on Pet itself but the user
+        const confirmed_appointment = await Appointment.findOne({ user: userId, status: 'confirmed' })
+            .populate({ path: 'vet', select: "fullName" })
+            .populate({ path: 'pet', select: "type name age" })
+            .sort({ date: 1 })
+            .limit(1);
+
+        const pending_appointments = await Appointment.find({ user: userId, status: 'pending' })
+            .sort({ date: 1 });
+
+        res.status(200).json({ upcoming_vaccination, recent_symptoms, confirmed_appointment, pending_appointments, next_reminder });
     } catch (error) {
         console.log(error);
         res.status(500).json({ succcess: false, message: "Inernal server error", error });
