@@ -74,9 +74,9 @@ ${brokenOutput}
 
 nutritionistRouter.post("/ask-nutritionist", async (req, res) => {
     try {
-        const { pet, activity_level, medical_conditions, current_symptoms, nutrition_goals, known_allergies, current_diet } = req.body;
+        const { pet, activityLevel, medicalConditions, currentSymptoms, treatmentGoals, knownAllergies, currentDiet } = req.body;
 
-        if (!pet || !activity_level || !nutrition_goals) {
+        if (!pet || !activityLevel || !treatmentGoals) {
             return res.status(400).json({ success: false, message: "Pet, Activity Level, and Nutrition Goals are required!" });
         }
 
@@ -92,11 +92,11 @@ Pet Name: ${pet.name}
 Age: ${pet.age}
 Gender: ${pet.gender}
 Breed: ${pet.breed}
-Activity Level: ${activity_level}
-Medical Conditions: ${medical_conditions?.length ? medical_conditions.join(", ") : "None"}
-Current Symptoms: ${current_symptoms?.length ? current_symptoms.join(", ") : "None"}
-Allergies: ${known_allergies?.length ? known_allergies.join(", ") : "None"}
-Current Diet: ${current_diet?.length ? current_diet.join(", ") : "None"}
+Activity Level: ${activityLevel}
+Medical Conditions: ${medicalConditions?.length ? medicalConditions.join(", ") : "None"}
+Current Symptoms: ${currentSymptoms?.length ? currentSymptoms.join(", ") : "None"}
+Allergies: ${knownAllergies?.length ? knownAllergies.join(", ") : "None"}
+Current Diet: ${currentDiet?.length ? currentDiet.join(", ") : "None"}
 
 Required JSON format:
 {
