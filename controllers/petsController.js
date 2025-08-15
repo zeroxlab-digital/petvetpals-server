@@ -6,7 +6,6 @@ import { AllergyCondition, MedicalHistory, Vaccination } from "../models/healthR
 import moment from "moment";
 import { SymptomReport } from "../models/symptom-checker/SymptomReport.js";
 import { Appointment } from "../models/appointmentModel.js";
-
 connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
 
 export const getOverallInformation = async (req, res) => {
