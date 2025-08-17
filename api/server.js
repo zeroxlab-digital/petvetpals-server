@@ -12,6 +12,7 @@ import messageRouter from "../routes/messenger/messeageRoute.js";
 import serverless from "serverless-http";
 import symptomRouter from "../routes/symptom-checker/symptomRoutes.js";
 import nutritionistRouter from "../routes/nutritionist/nutritionistRoutes.js";
+import allergyCoachRouter from "../routes/allergy-itch-coach/allergyCoachRoutes.js";
 import cron from "node-cron";
 import axios from "axios";
 import { ScheduleReminder } from "../models/medicationsModel.js";
@@ -102,6 +103,7 @@ app.use("/api/pet", petRouter);
 app.use("/api/symptoms", symptomRouter);
 // Nutritionist
 app.use("/api/nutritionist", nutritionistRouter);
+app.use("/api/allergy-itch-coach", allergyCoachRouter);
 
 // Routes for the messenger between pet owner and vet :)
 app.use("/api/message", messageRouter);
