@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { Vet } from "../models/vetModel.js";
 import jwt from "jsonwebtoken";
+import { Appointment } from "../models/appointmentModel.js";
 
 export const registerVet = async (req, res) => {
     try {
@@ -44,13 +45,25 @@ export const loginVet = async (req, res) => {
             vetId: vet._id
         }
         const vet_token = await jwt.sign(tokenData, process.env.JWT_SECRET_KEY, { expiresIn: '1d' });
-        res.status(200).cookie("vet_token", vet_token, { maxAge: 1 * 24 * 60 * 60 * 1000, 
+        res.status(200).cookie("vet_token", vet_token, {
+            maxAge: 1 * 24 * 60 * 60 * 1000,
             // Comment this line below for in localhost run
-            sameSite: 'none', secure: process.env.NODE_ENV === "production" 
-        }).json({ status: "success", message: "Login successfull!", vetData })
+            // sameSite: 'none', secure: process.env.NODE_ENV === "production" 
+        }).json({ success: true, message: "Vet login successfull!" });
     } catch (error) {
         console.log(error);
         res.status(400).json({ message: "Internal server error!", error });
+    }
+}
+
+export const getVetProfile = async (req, res) => {
+    try {
+        const vetId = req.id;
+        const vet = await Vet.findById(vetId).select("-password -__v");
+        res.status(200).json({ success: true, vet });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error })
     }
 }
 
@@ -97,6 +110,23 @@ export const vetLogout = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error", error });
     }
 };
+
+export const getAppointments = async (req, res) => {
+    try {
+        const vetId = req.id;
+        console.log("Vet ID:", vetId)
+        const appointments = await Appointment.find({
+            vet: vetId,
+            payment_status: true
+        })
+        .populate({ path: "user", select: "fullName email gender image city" })
+        console.log("Appointments:", appointments);
+        res.status(200).json({ success: true, appointments })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ success: false, message: "Internal server error", error });
+    }
+}
 
 
 export const getAllVets = async (req, res) => {
