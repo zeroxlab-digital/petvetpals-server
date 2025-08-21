@@ -48,7 +48,7 @@ export const loginVet = async (req, res) => {
         res.status(200).cookie("vet_token", vet_token, {
             maxAge: 1 * 24 * 60 * 60 * 1000,
             // Comment this line below for in localhost run
-            // sameSite: 'none', secure: process.env.NODE_ENV === "production" 
+            sameSite: 'none', secure: process.env.NODE_ENV === "production" 
         }).json({ success: true, message: "Vet login successfull!" });
     } catch (error) {
         console.log(error);
@@ -99,9 +99,8 @@ export const updateVetProfile = async (req, res) => {
 export const vetLogout = async (req, res) => {
     try {
         res.clearCookie("vet_token", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production", // Use secure in production
-            sameSite: "strict"
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "none"
         });
 
         return res.json({ success: true, message: "Logout successful!" });
