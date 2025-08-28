@@ -32,7 +32,7 @@ app.use(express.json());
 app.use(cookieParser());
 const corsOptions = {
     origin: (origin, callback) => {
-        const allowedOrigins = ['http://localhost:3000', 'https://petvetpals.vercel.app'];
+        const allowedOrigins = ['http://localhost:3000', 'https://petvetpals.vercel.app', 'https://www.petvetpals.com'];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
