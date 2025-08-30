@@ -14,9 +14,6 @@ import symptomRouter from "../routes/symptom-checker/symptomRoutes.js";
 import nutritionistRouter from "../routes/nutritionist/nutritionistRoutes.js";
 import allergyCoachRouter from "../routes/allergy-itch-coach/allergyCoachRoutes.js";
 import cron from "node-cron";
-import axios from "axios";
-import { ScheduleReminder } from "../models/medicationsModel.js";
-import moment from "moment";
 import pushRouter from "../routes/pushRouter.js";
 import { sendPushNotificationsLogic } from "../controllers/pushController.js";
 configDotenv();
@@ -30,9 +27,15 @@ connectCloudinary();
 // middleware
 app.use(express.json());
 app.use(cookieParser());
+
 const corsOptions = {
-    origin: (origin, callback) => {
-        const allowedOrigins = ['http://localhost:3000', 'https://petvetpals.vercel.app', 'https://www.petvetpals.com'];
+    origin: function (origin, callback) {
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'https://petvetpals.vercel.app',
+            'https://petvetpals.com',
+            'https://www.petvetpals.com'
+        ];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -44,16 +47,9 @@ const corsOptions = {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 };
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
-// CRON JOB
-// cron.schedule('*/15 * * * *', async () => {
-//     try {
-//         await axios.get(`${process.env.API_BASE}/api/pet/medications/reset-medication-reminders`);
-//         console.log("⏱️ Reminder reset triggered.");
-//     } catch (err) {
-//         console.error("❌ Reminder reset failed:", err);
-//     }
-// });
+// CRON job to send push notifications
 cron.schedule("*/1 * * * *", async () => {
     console.log("Running reminder push task...");
     try {
@@ -65,16 +61,19 @@ cron.schedule("*/1 * * * *", async () => {
 });
 
 
-// routers
+// ROUTES
 app.get("/", (req, res) => {
     res.send("Hello world, welcome to PetVetPals!")
 })
+
 app.use("/api/vet", vetRouter);
 app.use("/api/user", userRouter);
 app.use("/api/appointment", appointmentRouter);
 app.use("/api/pet", petRouter);
+
 // Symptom router
 app.use("/api/symptoms", symptomRouter);
+
 // Nutritionist
 app.use("/api/nutritionist", nutritionistRouter);
 app.use("/api/allergy-itch-coach", allergyCoachRouter);
