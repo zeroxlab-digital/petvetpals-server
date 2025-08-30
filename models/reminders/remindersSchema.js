@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const reminderSchema = new Schema({
     user: {
@@ -9,10 +9,10 @@ const reminderSchema = new Schema({
     reminder_type: {
         type: String,
         enum: {
-            values: ["Medication", "Appointment", "Exercise", "Diet", "Other"],
+            values: ["Vaccination", "Vet Appointment", "Task", "Exercise", "Diet", "Other"],
             message: `{VALUE} is not supported`
         },
-        required: [true, "Reminder type is required"]
+        required: [true, "Reminder type is required"],
     },
     frequency: {
         type: String,
@@ -20,7 +20,7 @@ const reminderSchema = new Schema({
             values: ["one_time", "daily_once", "daily_twice", "weekly", "bi-weekly", "monthly"],
             message: `{VALUE} is not supported`
         },
-        required: false
+        required: true
     },
     reminder_date: {
         type: Date,
@@ -37,10 +37,10 @@ const reminderSchema = new Schema({
         required: false,
         default: null
     },
-    reminder_offset: [
+    reminder_times: [
         {
             time: { type: String, required: true },
-            remind_before: {
+            reminde_before: {
                 type: String,
                 enum: ['0', '5', '10', '15', '30', '60'],
                 default: '10'
@@ -52,12 +52,14 @@ const reminderSchema = new Schema({
     ],
     notes: {
         type: String,
-        required: false
+        required: false,
+        default: null
     },
     reminder_methods: {
         type: [String],
         enum: ["push", "in-app"],
-        required: false
+        required: false,
+        default: ["push"]
     },
     repeat_reminder: {
         type: Boolean,

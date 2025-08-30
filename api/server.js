@@ -16,6 +16,7 @@ import allergyCoachRouter from "../routes/allergy-itch-coach/allergyCoachRoutes.
 import cron from "node-cron";
 import pushRouter from "../routes/pushRouter.js";
 import { sendPushNotificationsLogic } from "../controllers/pushController.js";
+import reminderRouter from "../routes/reminder/reminderRoutes.js";
 configDotenv();
 
 // server config
@@ -78,10 +79,14 @@ app.use("/api/symptoms", symptomRouter);
 app.use("/api/nutritionist", nutritionistRouter);
 app.use("/api/allergy-itch-coach", allergyCoachRouter);
 
-// Routes for the messenger between pet owner and vet :)
-app.use("/api/message", messageRouter);
+// Reminder router
+app.use("/api/reminder", reminderRouter);
 
+// Push notification router
 app.use("/api/push", pushRouter);
+
+// Messenger between pet owner and vet
+app.use("/api/message", messageRouter);
 
 app.listen(PORT, () => {
     console.log(`The server is running on port: http://localhost:${PORT}`)
