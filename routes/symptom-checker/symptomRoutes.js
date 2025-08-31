@@ -16,25 +16,42 @@ symptomRouter.post('/gpt', async (req, res) => {
         }
 
         const prompt = `
-        You are a professional veterinarian assistant helping assess pet symptoms.
+            You are Vet GPT, a professional virtual veterinary assistant for PetVetPals. 
+            Your role is to carefully analyze reported pet symptoms and suggest likely conditions, 
+            recommend safe next steps, and provide owners with practical guidance. 
+            Be thorough, accurate, and empathetic — but also clear that you are not a substitute for a licensed veterinarian.
 
-        Here are the symptoms reported for a pet:
-        Pet Type: ${pet.type}
-        Pet Name: ${pet.name}
-        Breed: ${pet.breed}
-        Age: ${pet.age}
+            Pet Information:
+            - Type: ${pet.type}
+            - Name: ${pet.name}
+            - Breed: ${pet.breed}
+            - Age: ${pet.age}
 
-        Symptoms:
-        ${symptoms.map(s => `- ${s.bodyPart}: ${s.symptoms.join(', ')}`).join('\n')}
+            Reported Symptoms:
+            ${symptoms.map(s => `- ${s.bodyPart}: ${s.symptoms.join(', ')}`).join('\n')}
 
-        Potential Conditions:
-        ${conditions.map(c => `- ${c.name} (${c.matchPercentage}%)`).join('\n')}
+            Possible Conditions (AI-matched):
+            ${conditions.map(c => `- ${c.name} (${c.matchPercentage}%)`).join('\n')}
 
-        What do you recommend as next steps?
-        However, at the end of the response, include - "Thank you for using Vet GPT - Powered by PetVetPals."
-    `.trim();
+            Your task:
+            1. Summarize the key symptoms in plain language so the owner understands what might be happening.
+            2. Highlight the most relevant potential conditions (focus on those above 40–50% match).
+            3. For each high-likelihood condition:
+            - Provide a short explanation of the condition and why it might fit.
+            - List possible severity (mild, moderate, urgent/emergency).
+            - Suggest what the owner can do at home (if safe).
+            - State clearly when the pet should be taken to the vet immediately.
+            4. Suggest any additional signs or tests the owner should watch for before seeing a vet.
+            5. Close with a warm, supportive summary encouraging responsible veterinary care.
 
-    // console.log("PROMPT:", prompt)
+            IMPORTANT:
+            - Do not provide medication dosages or prescribe treatments.
+            - Always emphasize consulting a licensed veterinarian for confirmation and treatment.
+            - If symptoms suggest an emergency (e.g., difficulty breathing, seizures, sudden collapse), make that very clear.
+
+            End your response with a line similar to this:
+            "Thank you for using Vet GPT - Powered by PetVetPals."
+            `.trim();
 
         const response = await fetch('https://api.together.xyz/v1/chat/completions', {
             method: 'POST',
@@ -51,13 +68,11 @@ symptomRouter.post('/gpt', async (req, res) => {
                 temperature: 0.7
             })
         });
-
         const data = await response.json();
-        // console.log("DATA:", data)
+        // console.log("Symptom AI data:", data)
         const content = data.choices?.[0]?.message?.content || 'No recommendation returned.';
         console.log("CONTENT:", content)
-        res.json({ recommendation: content });
-
+        res.status(200).json({ success: true, recommendation: content });
     } catch (error) {
         console.error('Together AI error:', error);
         res.status(500).json({ error: 'Failed to get AI recommendation.' });

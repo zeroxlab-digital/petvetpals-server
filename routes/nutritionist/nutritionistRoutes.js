@@ -6,16 +6,16 @@ configDotenv();
 const nutritionistRouter = express.Router();
 
 // Empty JSON structure fallback
-const emptyNutritionPlan = {
-    dailyCalories: 0,
-    proteinNeeds: "",
-    fatNeeds: "",
-    carbNeeds: "",
-    feedingSchedule: [],
-    recommendedIngredients: [],
-    avoidIngredients: [],
-    brandRecommendations: [],
-};
+// const emptyNutritionPlan = {
+//     dailyCalories: 0,
+//     proteinNeeds: "",
+//     fatNeeds: "",
+//     carbNeeds: "",
+//     feedingSchedule: [],
+//     recommendedIngredients: [],
+//     avoidIngredients: [],
+//     brandRecommendations: [],
+// };
 
 // Extract first valid JSON object from string
 function extractJSONFromAI(text) {
@@ -44,33 +44,33 @@ function extractJSONFromAI(text) {
 }
 
 // Repaires JSON using free model if needed
-async function repairJSONWithFreeModel(brokenOutput) {
-    try {
-        const repairPrompt = `
-Fix the following broken JSON. Return only valid JSON. Preserve all original data.
-Input:
-${brokenOutput}
-`;
-        const response = await fetch("https://api.together.xyz/inference", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${process.env.TOGETHER_API_KEY}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                model: "meta-llama/Llama-3-8b-chat-hf",
-                prompt: repairPrompt,
-                max_tokens: 1500,
-                temperature: 0,
-            }),
-        });
-        const data = await response.json();
-        const fixedText = data.output?.choices?.[0]?.text?.trim();
-        return extractJSONFromAI(fixedText) || null;
-    } catch {
-        return null;
-    }
-}
+// async function repairJSONWithFreeModel(brokenOutput) {
+//     try {
+//         const repairPrompt = `
+// Fix the following broken JSON. Return only valid JSON. Preserve all original data.
+// Input:
+// ${brokenOutput}
+// `;
+//         const response = await fetch("https://api.together.xyz/inference", {
+//             method: "POST",
+//             headers: {
+//                 "Authorization": `Bearer ${process.env.TOGETHER_API_KEY}`,
+//                 "Content-Type": "application/json",
+//             },
+//             body: JSON.stringify({
+//                 model: "meta-llama/Llama-3-8b-chat-hf",
+//                 prompt: repairPrompt,
+//                 max_tokens: 1500,
+//                 temperature: 0,
+//             }),
+//         });
+//         const data = await response.json();
+//         const fixedText = data.output?.choices?.[0]?.text?.trim();
+//         return extractJSONFromAI(fixedText) || null;
+//     } catch {
+//         return null;
+//     }
+// }
 
 nutritionistRouter.post("/ask-nutritionist", async (req, res) => {
     try {
@@ -81,75 +81,78 @@ nutritionistRouter.post("/ask-nutritionist", async (req, res) => {
         }
 
         const prompt = `
-You are a professional pet nutritionist specializing in dogs and cats. 
-Analyze the following pet details and provide a personalized nutrition plan. 
-**Output only valid JSON**, with no extra text, Markdown, or comments. 
-All values should be generated specifically for this pet based on its details.
+        You are a professional pet nutritionist specializing in dogs and cats. 
+        Analyze the following pet details and provide a personalized nutrition plan. 
+        **Output only valid JSON**, with no extra text, Markdown, or comments. 
+        All values should be generated specifically for this pet based on its details.
 
-Pet Details:
-Species: ${pet.type}
-Pet Name: ${pet.name}
-Age: ${pet.age}
-Gender: ${pet.gender}
-Breed: ${pet.breed}
-Activity Level: ${activityLevel}
-Medical Conditions: ${medicalConditions?.length ? medicalConditions.join(", ") : "None"}
-Current Symptoms: ${currentSymptoms?.length ? currentSymptoms.join(", ") : "None"}
-Allergies: ${knownAllergies?.length ? knownAllergies.join(", ") : "None"}
-Current Diet: ${currentDiet?.length ? currentDiet.join(", ") : "None"}
+        Pet Details:
+        Species: ${pet.type}
+        Pet Name: ${pet.name}
+        Age: ${pet.age}
+        Gender: ${pet.gender}
+        Breed: ${pet.breed}
+        Activity Level: ${activityLevel}
+        Medical Conditions: ${medicalConditions?.length ? medicalConditions.join(", ") : "None"}
+        Current Symptoms: ${currentSymptoms?.length ? currentSymptoms.join(", ") : "None"}
+        Allergies: ${knownAllergies?.length ? knownAllergies.join(", ") : "None"}
+        Current Diet: ${currentDiet?.length ? currentDiet.join(", ") : "None"}
 
-Required JSON format:
-{
-  "dailyCalories": number,                // Total daily calories
-  "proteinNeeds": "X-Y%",                 // Percentage of protein
-  "fatNeeds": "X-Y%",                     // Percentage of fat
-  "carbNeeds": "X-Y%",                    // Percentage of carbohydrates
-  "feedingSchedule": [                     // List of meals
-    { "meal": "Breakfast|Lunch|Dinner", "time": "HH:MM AM/PM", "portion": "amount" }
-  ],
-  "recommendedIngredients": [             // List of recommended ingredients
-    { "name": "Ingredient name", "type": "Protein|Fat|Carbohydrate|Antioxidant", "benefit": "Reason for recommendation" }
-  ],
-  "avoidIngredients": [                   // Ingredients that are harmful for this pet
-    "Ingredient1", "Ingredient2"
-  ],
-  "brandRecommendations": [               // Optional recommended pet food brands
-    { "name": "Brand Name", "price": "$XX.XX", "rating": 4.5, "affiliate": true|false, "reason": "Reason for recommendation" }
-  ]
-}
-`
-;
+        Required JSON format:
+        {
+        "dailyCalories": number,                // Total daily calories
+        "proteinNeeds": "X-Y%",                 // Percentage of protein
+        "fatNeeds": "X-Y%",                     // Percentage of fat
+        "carbNeeds": "X-Y%",                    // Percentage of carbohydrates
+        "feedingSchedule": [                     // List of meals
+            { "meal": "Breakfast|Lunch|Dinner", "time": "HH:MM AM/PM", "portion": "amount" }
+        ],
+        "recommendedIngredients": [             // List of recommended ingredients
+            { "name": "Ingredient name", "type": "Protein|Fat|Carbohydrate|Antioxidant", "benefit": "Reason for recommendation" }
+        ],
+        "avoidIngredients": [                   // Ingredients that are harmful for this pet
+            "Ingredient1", "Ingredient2"
+        ],
+        "brandRecommendations": [               // Optional recommended pet food brands
+            { "name": "Brand Name", "price": "$XX.XX", "rating": 4.5, "affiliate": true|false, "reason": "Reason for recommendation" }
+        ]
+        }
+        `
+            ;
 
-        const aiResponse = await fetch("https://api.together.xyz/inference", {
+        const aiResponse = await fetch("https://api.together.xyz/v1/chat/completions", {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${process.env.TOGETHER_API_KEY}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                model: "meta-llama/Llama-3-8b-chat-hf",
+                // model: "meta-llama/Llama-3-8b-chat-hf",
+                model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
                 prompt,
                 max_tokens: 1500,
                 temperature: 0.7,
             }),
         });
-
+        // console.log("Nutrition AI RESPONSE:", aiResponse)
         const data = await aiResponse.json();
-        const rawOutput = data.output?.choices?.[0]?.text;
+        // console.log("Nutrition AI data:", data)
+        const rawOutput = data?.choices?.[0]?.text;
         let plan = extractJSONFromAI(rawOutput);
-        console.log("PLAN:", plan)
-        if (!plan) {
-            console.warn("AI output invalid JSON — attempting repair...");
-            plan = await repairJSONWithFreeModel(rawOutput);
-        }
+
+        // if (!plan) {
+        //     console.warn("AI output invalid JSON — attempting repair...");
+        //     plan = await repairJSONWithFreeModel(rawOutput);
+        // }
 
         if (!plan) {
-            console.error("Both main model and repair model failed. Returning empty nutrition plan.");
-            plan = emptyNutritionPlan;
+            console.error("Model failed generating nutrition plan. Returning empty nutrition plan.");
+            // plan = emptyNutritionPlan;
         }
+
+        console.log("PLAN:", plan)
 
         res.json({ success: true, plan });
-
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: "Internal server error! Failed to ask nutritionist.", error });
