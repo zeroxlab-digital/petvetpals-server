@@ -29,23 +29,38 @@ connectCloudinary();
 app.use(express.json());
 app.use(cookieParser());
 
+// List of hostnames allowed for CORS
+const allowedHostnames = [
+    'localhost',                  // for dev
+    'petvetpals.com',             // production
+    'www.petvetpals.com',         // production with www
+    'petvetpals.vercel.app',      // Vercel deployment
+];
+
+// CORS options
 const corsOptions = {
-    origin: function (origin, callback) {
-        const allowedOrigins = [
-            'http://localhost:3000',
-            'https://petvetpals.vercel.app',
-            'https://petvetpals.com',
-            'https://www.petvetpals.com'
-        ];
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
+    origin: (origin, callback) => {
+        if (!origin) {
+            // This will allow requests with no origin (Postman, curl, server-to-server)
+            return callback(null, true);
+        }
+
+        try {
+            const url = new URL(origin);
+            if (allowedHostnames.includes(url.hostname)) {
+                return callback(null, true);
+            } else {
+                console.log('Blocked by CORS:', origin);
+                return callback(new Error('Not allowed by CORS'));
+            }
+        } catch (err) {
+            console.log('Invalid origin:', origin);
+            return callback(new Error('Invalid origin'));
         }
     },
-    credentials: true,
+    credentials: true, // allow cookies/auth headers
     allowedHeaders: ['Content-Type', 'Authorization'],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 };
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
