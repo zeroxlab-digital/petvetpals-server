@@ -7,7 +7,6 @@ const reminderRouter = express.Router();
 
 reminderRouter.post("/schedule-reminder", userAuthenticated, async (req, res) => {
     try {
-        console.log("req:", req.id)
         const id = req.id;
         const { reminder_type, frequency, reminder_date, starting_date, end_date, reminder_times, notes, reminder_methods, repeat_reminder } = req.body;
         const newReminder = await Reminder.create({
@@ -29,10 +28,11 @@ reminderRouter.get("/get-reminders", userAuthenticated, async (req, res) => {
 
         const pets = await Pet.find({ user: id });
         const petIds = pets.map(p => p._id);
-        const medicationReminders = await ScheduleReminder.find({ pet: { $in: petIds } }).populate("medication", "mediction").populate("pet", "name");
+        const medicationReminders = await ScheduleReminder.find({ pet: { $in: petIds } }).populate("medication", "medication").populate("pet", "name");
 
         const reminders = [
             ...generalReminders.map(r => ({
+                _id: r._id,
                 type: r.reminder_type || "General",
                 frequency: r.frequency,
                 reminder_date: r.reminder_date || null,
@@ -45,6 +45,7 @@ reminderRouter.get("/get-reminders", userAuthenticated, async (req, res) => {
                 repeat_reminder: r.repeat_reminder,
             })),
             ...medicationReminders.map(mr => ({
+                _id: mr._id,
                 type: "Medication",
                 medication: mr.medication,
                 pet: mr.pet,
@@ -61,6 +62,21 @@ reminderRouter.get("/get-reminders", userAuthenticated, async (req, res) => {
         ]
 
         res.status(200).json({ success: true, reminders });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: "Server error. Please try again later.", error: error.message });
+    }
+})
+
+reminderRouter.delete("/delete-reminder/:id", userAuthenticated, async (req, res) => {
+    try {
+        const id = req.id;
+        const reminderId = req.params.id;
+        const reminder = await Reminder.findOneAndDelete({ _id: reminderId, user: id });
+        if (!reminder) {
+            return res.status(404).json({ success: false, message: "Reminder not found" });
+        }
+        res.status(200).json({ success: true, message: "Reminder deleted successfully" });
     } catch (error) {
         console.log(error);
         res.status(500).json({ success: false, message: "Server error. Please try again later.", error: error.message });

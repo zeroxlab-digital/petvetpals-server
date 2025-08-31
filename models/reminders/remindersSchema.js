@@ -9,7 +9,7 @@ const reminderSchema = new Schema({
     reminder_type: {
         type: String,
         enum: {
-            values: ["Vaccination", "Vet Appointment", "Task", "Exercise", "Diet", "Other"],
+            values: ["Vaccination", "Vet Appointment", "Exercise", "Hydration", "Other"],
             message: `{VALUE} is not supported`
         },
         required: [true, "Reminder type is required"],
