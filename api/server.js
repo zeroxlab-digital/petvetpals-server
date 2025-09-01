@@ -79,7 +79,7 @@ cron.schedule("*/1 * * * *", async () => {
 
 // ROUTES
 app.get("/", (req, res) => {
-    res.send("Hello world, welcome to PetVetPals!")
+    res.send("Hello pawsome people, welcome to PetVetPals!")
 })
 
 app.use("/api/vet", vetRouter);
