@@ -1,11 +1,9 @@
 import express from 'express';
 import { configDotenv } from 'dotenv';
 import { SymptomReport } from '../../models/symptom-checker/SymptomReport.js';
-// import { OpenAI } from 'openai';
 configDotenv();
 
 const symptomRouter = express.Router();
-// const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 symptomRouter.post('/gpt', async (req, res) => {
     try {
