@@ -14,6 +14,13 @@ export const getOverallInformation = async (req, res) => {
         const { id } = req.query;
 
         const pet = await Pet.findById(id);
+        // console.log("pet:", pet)
+        // const overall_health = pet.overall_health || null;
+        // console.log(overall_health)
+        const energy_level = pet.energy_level || null;
+        console.log("Energy level:", energy_level);
+        const activity_level = pet.activity_level || null;
+        console.log("Activity level:", activity_level);
 
         const upcoming_vaccination = await Vaccination.findOne({ pet: pet._id, next_due: { $gte: new Date() } }).sort({ next_due: 1 }).limit(1).select("vaccine next_due status notes");
 
@@ -782,5 +789,39 @@ export const updateAllergyCondition = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });
+    }
+}
+
+
+// ------------------ //
+// Pet Health Insights - Overall Health, Activity Level, Energy Level etc.
+
+
+export const logActivityLevel = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const { activity_level } = req.body;
+
+        const updated_activity_level = await Pet.findByIdAndUpdate({ _id: id }, {
+            $push: {
+                activity_level: {
+                    value: activity_level
+                }
+            }
+        }, { new: true, runValidators: true }).select("activity_level -_id");
+
+        res.status(200).json({ success: true, message: "Logged new activity level!", activity_level: updated_activity_level.activity_level })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: "Internal server error!", error })
+    }
+}
+
+export const logEnergyLevel = async (req, res) => {
+    try {
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: "Internal server error!", error })
     }
 }

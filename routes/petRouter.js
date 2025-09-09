@@ -1,5 +1,5 @@
 import express from "express";
-import { addAllergyCondition, addMedicalHistory, addMedication, addMedScheduleReminder, addPetProfile, addVaccination, checkReminderNotifications, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteMedScheduledReminder, deleteVaccination, getAllergiesConditions, getMedicalHistory, getMedications, getMedScheduledReminders, getOverallInformation, getPetProfiles, getVaccinations, markGivenMedScheduledReminder, resetMedicationReminders, updateAllergyCondition, updateMedicalHistory, updateMedication, updateMedScheduledReminder, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
+import { addAllergyCondition, addMedicalHistory, addMedication, addMedScheduleReminder, addPetProfile, addVaccination, checkReminderNotifications, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteMedScheduledReminder, deleteVaccination, getAllergiesConditions, getMedicalHistory, getMedications, getMedScheduledReminders, getOverallInformation, getPetProfiles, getVaccinations, logActivityLevel, logEnergyLevel, markGivenMedScheduledReminder, resetMedicationReminders, updateAllergyCondition, updateMedicalHistory, updateMedication, updateMedScheduledReminder, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
 import userAuthenticated from "../middlewares/userAuthenticated.js";
 import upload from "../middlewares/multer.js";
 const petRouter = express.Router();
@@ -9,6 +9,8 @@ petRouter.get("/get-pets", userAuthenticated, getPetProfiles)
 petRouter.post("/add-pet", userAuthenticated, upload.single("image"), addPetProfile);
 petRouter.patch("/update-pet/:id", userAuthenticated, upload.single("image"), updatePetProfile);
 petRouter.get("/get-pet-data", userAuthenticated, getOverallInformation);
+petRouter.patch("/log-activity-level", userAuthenticated, logActivityLevel);
+petRouter.patch("/log-energy-level", userAuthenticated, logEnergyLevel);
 
 // Pet Medications
 petRouter.post('/medications/add-medication', userAuthenticated, addMedication);

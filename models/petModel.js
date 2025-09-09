@@ -38,6 +38,24 @@ const petSchema = mongoose.Schema({
             value: { type: Number, required: true },
             date: { type: Date, default: Date.now }
         }
-    ]
+    ],
+    activity_level: [
+        {
+            value: { type: Number, required: true, min: 0, max: 100 },
+            date: { type: Date, default: Date.now }
+        }
+    ],
+    energy_level: [
+        {
+            value: { type: Number, required: true, min: 0, max: 100 },
+            date: { type: Date, default: Date.now }
+        }
+    ],
+    overall_health: {
+        type: Number,
+        required: false,
+        min: 0,
+        max: 100
+    }
 }, { timestamps: true })
 export const Pet = mongoose.model("Pet", petSchema);
