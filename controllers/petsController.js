@@ -8,21 +8,12 @@ import { SymptomReport } from "../models/symptom-checker/SymptomReport.js";
 import { Appointment } from "../models/appointmentModel.js";
 connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
 
-export const getOverallInformation = async (req, res) => {
+export const getDetailedPetData = async (req, res) => {
     try {
         const userId = req.id;
         const { id } = req.query;
 
-        const pet = await Pet.findById(id);
-
-        const weight = pet.weight || null;
-
-        const energy_level = pet.energy_level || null;
-
-        const activity_level = pet.activity_level || null;
-
-        // const overall_health = pet.overall_health || null;
-        // console.log(overall_health)
+        const pet = await Pet.findById(id).select("-user -__v");
 
         const upcoming_vaccination = await Vaccination.findOne({ pet: pet._id, next_due: { $gte: new Date() } }).sort({ next_due: 1 }).limit(1).select("vaccine next_due status notes");
 
@@ -122,7 +113,7 @@ export const getOverallInformation = async (req, res) => {
         const pending_appointments = await Appointment.find({ user: userId, status: 'pending' })
             .sort({ date: 1 });
 
-        res.status(200).json({ upcoming_vaccination, recent_symptoms, confirmed_appointment, pending_appointments, next_reminder, energy_level, activity_level });
+        res.status(200).json({ pet, upcoming_vaccination, recent_symptoms, confirmed_appointment, pending_appointments, next_reminder });
     } catch (error) {
         console.log(error);
         res.status(500).json({ succcess: false, message: "Inernal server error", error });
