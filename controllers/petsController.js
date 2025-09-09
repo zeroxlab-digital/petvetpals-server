@@ -14,13 +14,15 @@ export const getOverallInformation = async (req, res) => {
         const { id } = req.query;
 
         const pet = await Pet.findById(id);
-        // console.log("pet:", pet)
+
+        const weight = pet.weight || null;
+
+        const energy_level = pet.energy_level || null;
+
+        const activity_level = pet.activity_level || null;
+
         // const overall_health = pet.overall_health || null;
         // console.log(overall_health)
-        const energy_level = pet.energy_level || null;
-        console.log("Energy level:", energy_level);
-        const activity_level = pet.activity_level || null;
-        console.log("Activity level:", activity_level);
 
         const upcoming_vaccination = await Vaccination.findOne({ pet: pet._id, next_due: { $gte: new Date() } }).sort({ next_due: 1 }).limit(1).select("vaccine next_due status notes");
 
@@ -120,7 +122,7 @@ export const getOverallInformation = async (req, res) => {
         const pending_appointments = await Appointment.find({ user: userId, status: 'pending' })
             .sort({ date: 1 });
 
-        res.status(200).json({ upcoming_vaccination, recent_symptoms, confirmed_appointment, pending_appointments, next_reminder });
+        res.status(200).json({ upcoming_vaccination, recent_symptoms, confirmed_appointment, pending_appointments, next_reminder, energy_level, activity_level });
     } catch (error) {
         console.log(error);
         res.status(500).json({ succcess: false, message: "Inernal server error", error });
@@ -793,9 +795,7 @@ export const updateAllergyCondition = async (req, res) => {
 }
 
 
-// ------------------ //
-// Pet Health Insights - Overall Health, Activity Level, Energy Level etc.
-
+// ---------- Pet Health Insights - Overall Health, Activity Level, Energy Level etc. ----------- //
 
 export const logActivityLevel = async (req, res) => {
     try {
@@ -819,7 +819,18 @@ export const logActivityLevel = async (req, res) => {
 
 export const logEnergyLevel = async (req, res) => {
     try {
+        const { id } = req.query;
+        const { energy_level } = req.body;
 
+        const updated_energy_level = await Pet.findByIdAndUpdate({ _id: id }, {
+            $push: {
+                energy_level: {
+                    value: energy_level
+                }
+            }
+        }, { new: true, runValidators: true }).select("energy_level -_id");
+
+        res.status(200).json({ success: true, message: "Logged new energy level!", energy_level: updated_energy_level.energy_level })
     } catch (error) {
         console.log(error);
         res.status(500).json({ success: false, message: "Internal server error!", error })
