@@ -41,13 +41,13 @@ const petSchema = mongoose.Schema({
     ],
     activity_level: [
         {
-            value: { type: Number, required: true, min: 0, max: 100 },
+            value: { type: Number, required: false, min: 0, max: 100 },
             date: { type: Date, default: Date.now }
         }
     ],
     energy_level: [
         {
-            value: { type: Number, required: true, min: 0, max: 100 },
+            value: { type: Number, required: false, min: 0, max: 100 },
             date: { type: Date, default: Date.now }
         }
     ],
