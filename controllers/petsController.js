@@ -534,16 +534,17 @@ export const addMedicalHistory = async (req, res) => {
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const { type, diagnosis, treatment, vetId, date, file, description, notes } = req.body;
-        if (!vetId) {
-            return res.status(400).json({ message: "Vet ID is required!" });
+        const { type, diagnosis, treatment, vetOrClinic, date, file, description, notes } = req.body;
+
+        if (!type) {
+            return res.status(400).json({ message: "Type is required!" });
         }
         if (!type || !diagnosis) {
             return res.status(400).json({ message: "All fields are required!" });
         }
         const newMedicalHistory = await MedicalHistory.create({
             pet: petId,
-            vet: vetId,
+            vetOrClinic,
             type,
             diagnosis: diagnosis || "None required",
             treatment,
@@ -552,6 +553,7 @@ export const addMedicalHistory = async (req, res) => {
             description,
             notes
         });
+        console.log("Added new medical record:", newMedicalHistory)
         res.status(200).json({ success: true, message: "Health record added successfully!" });
     } catch (error) {
         console.log(error);
@@ -565,7 +567,6 @@ export const getMedicalHistory = async (req, res) => {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
         const medicalHistory = await MedicalHistory.find({ pet: petId })
-            .populate("vet", "fullName")
             .populate("pet", "name type age")
             .select("-__v");
         res.status(200).json({ success: true, medicalHistory });
@@ -578,13 +579,13 @@ export const updateMedicalHistory = async (req, res) => {
     try {
         const { id } = req.query;
         console.log("Medical ID:", id)
-        const { type, diagnosis, treatment, vetId, date, file, description, notes } = req.body;
+        const { type, diagnosis, treatment, vetOrClinic, date, file, description, notes } = req.body;
 
         const updatedMedicalHistory = await MedicalHistory.findByIdAndUpdate({ _id: id }, {
             type,
             diagnosis,
             treatment,
-            vet: vetId,
+            vetOrClinic,
             date,
             file,
             description,
@@ -593,7 +594,7 @@ export const updateMedicalHistory = async (req, res) => {
             new: true,
             runValidators: true
         });
-        console.log("Updated Medical history:", updatedMedicalHistory)
+
         if (!updatedMedicalHistory) {
             return res.status(400).json({ success: false, message: "Updating medical history failed!" });
         }

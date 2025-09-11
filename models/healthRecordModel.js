@@ -8,10 +8,9 @@ const medicalHistorySchema = new Schema({
         ref: 'Pet',
         required: true
     },
-    vet: {
-        type: Schema.Types.ObjectId,
-        ref: 'Vet',
-        required: true
+    vetOrClinic: {
+        type: String,
+        required: false
     },
     type: {
         type: String,
