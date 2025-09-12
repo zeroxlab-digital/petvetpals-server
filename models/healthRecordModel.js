@@ -52,9 +52,8 @@ const vaccinationSchema = new Schema({
         required: true
     },
     provider: {
-        type: Schema.Types.ObjectId,
-        ref: 'Vet',
-        required: true
+        type: String,
+        required: false
     },
     vaccine: {
         type: String,

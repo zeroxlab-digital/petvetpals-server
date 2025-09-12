@@ -629,8 +629,8 @@ export const addVaccination = async (req, res) => {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
         const { vaccine, provider, date_given, next_due, status, notes } = req.body;
-        if (!vaccine || !provider) {
-            return res.status(400).json({ message: "Vaccine and provider is required" });
+        if (!vaccine) {
+            return res.status(400).json({ message: "Vaccine is required" });
         }
         const newVaccination = await Vaccination.create({
             pet: petId,
