@@ -56,9 +56,8 @@ const medicationSchema = mongoose.Schema({
         required: false
     },
     prescribed_by: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Vet",
-        required: true
+        type: String,
+        required: false
     }
 }, { timestamps: true })
 
