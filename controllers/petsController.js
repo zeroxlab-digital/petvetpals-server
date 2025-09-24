@@ -256,6 +256,14 @@ export const getMedications = async (req, res) => {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
         const medications = await Medication.find({ pet: petId }).populate("pet", "name type age").select("-__v");
+
+        // Updates any medications that have passed their end date is_ongoing to false for those medications
+        const today = new Date();
+        const updateMedicationsStatus = medications.filter(med => med.end_date && med.end_date < today && med.is_ongoing);
+        await Medication.updateMany({ _id: { $in: updateMedicationsStatus.map(med => med._id)} }, {
+            is_ongoing: false
+        });
+
         res.status(200).json({ success: true, medications });
     } catch (error) {
         console.log(error);
@@ -383,7 +391,13 @@ export const getMedScheduledReminders = async (req, res) => {
         if (!petId) {
             return res.status(404).json({ success: false, message: "Pet ID is required!" })
         }
-        const scheduledReminders = await ScheduleReminder.find({ pet: petId }).populate("medication").select("-__v")
+        const scheduledReminders = await ScheduleReminder.find({ pet: petId }).populate("medication").select("-__v");
+
+        // Deletes any reminders that have passed their end date
+        const today = new Date();
+        const deleteReminders = scheduledReminders.filter(item => item.end_date <= today);
+        await ScheduleReminder.deleteMany({ _id: { $in: deleteReminders.map(r => r._id) } });
+
         res.status(200).json({ success: true, scheduledReminders });
     } catch (error) {
         console.log(error);
