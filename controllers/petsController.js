@@ -221,11 +221,12 @@ export const addMedication = async (req, res) => {
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const { medication, dosage, frequency, remaining, start_date, end_date, next_due, is_ongoing, reason, timeOfDay, prescribed_by, instructions, } = req.body;
+        const { medication, dosage, frequency, remaining, start_date, end_date, is_ongoing, reason, timeOfDay, prescribed_by, instructions, } = req.body;
 
         if (!medication || !dosage || !frequency || !start_date) {
             return res.status(400).json({ message: "All fields are required!" });
         }
+
         const newMedication = await Medication.create({
             pet: petId,
             medication,
@@ -233,7 +234,6 @@ export const addMedication = async (req, res) => {
             frequency,
             time_of_day: timeOfDay,
             remaining,
-            next_due,
             start_date,
             end_date,
             is_ongoing,
@@ -255,13 +255,49 @@ export const getMedications = async (req, res) => {
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const medications = await Medication.find({ pet: petId }).populate("pet", "name type age").select("-__v");
 
-        // Updates any medications that have passed their end date is_ongoing to false for those medications
+        let medications = await Medication.find({ pet: petId })
+            .populate("pet", "name type age")
+            .select("-__v");
+
+        // Update ongoing status if end_date passed
         const today = new Date();
-        const updateMedicationsStatus = medications.filter(med => med.end_date && med.end_date < today && med.is_ongoing);
-        await Medication.updateMany({ _id: { $in: updateMedicationsStatus.map(med => med._id)} }, {
-            is_ongoing: false
+        const updateMedicationsStatus = medications.filter(
+            med => med.end_date && med.end_date < today && med.is_ongoing
+        );
+        if (updateMedicationsStatus.length) {
+            await Medication.updateMany(
+                { _id: { $in: updateMedicationsStatus.map(med => med._id) } },
+                { is_ongoing: false }
+            );
+        }
+
+        // Calculate next_due dynamically
+        medications = medications.map(med => {
+            if (med.is_ongoing) {
+                const start = new Date(med.start_date);
+                let next_due = null;
+
+                if (med.frequency.toLowerCase() === "daily") {
+                    next_due = new Date(today);
+                    next_due.setDate(today.getDate() + 1); // + 1 should be added after fixing timezone issues
+                } else if (med.frequency.toLowerCase() === "twice-daily") {
+                    next_due = new Date(today);
+                    next_due.setHours(today.getHours() + 12);
+                } else if (med.frequency.toLowerCase() === "weekly") {
+                    next_due = new Date(today);
+                    next_due.setDate(today.getDate() + 7); // + 7 should be added after fixing timezone issues
+                }
+                // fallback: just use start_date
+                else {
+                    next_due = start;
+                }
+
+                // Attach it without saving to DB
+                med = med.toObject();
+                med.next_due = next_due;
+            }
+            return med;
         });
 
         res.status(200).json({ success: true, medications });
@@ -269,7 +305,7 @@ export const getMedications = async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });
     }
-}
+};
 
 export const deleteMedication = async (req, res) => {
     try {
@@ -291,14 +327,13 @@ export const deleteMedication = async (req, res) => {
 export const updateMedication = async (req, res) => {
     try {
         const { id } = req.query;
-        const { medication, dosage, frequency, is_ongoing, prescribed_by } = req.body;
+        const { medication, dosage, frequency, end_date, prescribed_by } = req.body;
 
         const updatedMedication = await Medication.findByIdAndUpdate(id, {
             medication,
             dosage,
             frequency,
-            is_ongoing,
-            end_date: is_ongoing ? null : new Date(),
+            end_date,
             prescribed_by
         }, {
             new: true,
@@ -393,9 +428,10 @@ export const getMedScheduledReminders = async (req, res) => {
         }
         const scheduledReminders = await ScheduleReminder.find({ pet: petId }).populate("medication").select("-__v");
 
-        // Deletes any reminders that have passed their end date
+        // Deletes any reminders that have passed their end date or is not ongoing anymore
         const today = new Date();
-        const deleteReminders = scheduledReminders.filter(item => item.end_date <= today);
+        const deleteReminders = scheduledReminders.filter(item => item.end_date < today || item.medication.is_ongoing === false);
+
         await ScheduleReminder.deleteMany({ _id: { $in: deleteReminders.map(r => r._id) } });
 
         res.status(200).json({ success: true, scheduledReminders });
@@ -404,6 +440,7 @@ export const getMedScheduledReminders = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error });
     }
 }
+
 export const deleteMedScheduledReminder = async (req, res) => {
     try {
         const { id } = req.query;
