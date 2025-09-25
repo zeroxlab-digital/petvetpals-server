@@ -12,7 +12,7 @@ const medicationSchema = mongoose.Schema({
     },
     dosage: {
         type: String,
-        required: true
+        required: false
     },
     frequency: {
         type: String,

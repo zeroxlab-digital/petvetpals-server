@@ -223,7 +223,7 @@ export const addMedication = async (req, res) => {
         }
         const { medication, dosage, frequency, remaining, start_date, end_date, is_ongoing, reason, timeOfDay, prescribed_by, instructions, } = req.body;
 
-        if (!medication || !dosage || !frequency || !start_date) {
+        if (!medication || !frequency || !start_date) {
             return res.status(400).json({ message: "All fields are required!" });
         }
 
