@@ -1,5 +1,5 @@
 import express from "express";
-import { addAllergyCondition, addMedicalHistory, addMedication, addMedScheduleReminder, addPetProfile, addVaccination, checkReminderNotifications, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteMedScheduledReminder, deleteVaccination, getAllergiesConditions, getDetailedPetData, getMedicalHistory, getMedications, getMedScheduledReminders, getPetProfiles, getVaccinations, logActivityLevel, logEnergyLevel, markGivenMedScheduledReminder, resetMedicationReminders, updateAllergyCondition, updateMedicalHistory, updateMedication, updateMedScheduledReminder, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
+import { addAllergyCondition, addMedicalHistory, addMedication, addMedReminder, addPetProfile, addVaccination, checkReminderNotifications, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteMedReminder, deleteVaccination, getAllergiesConditions, getDetailedPetData, getMedicalHistory, getMedications, getMedReminders, getPetProfiles, getVaccinations, logActivityLevel, logEnergyLevel, markGivenMedReminder, resetMedReminders, updateAllergyCondition, updateMedicalHistory, updateMedication, updateMedReminder, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
 import userAuthenticated from "../middlewares/userAuthenticated.js";
 import upload from "../middlewares/multer.js";
 const petRouter = express.Router();
@@ -18,13 +18,13 @@ petRouter.get('/medications/get-medications', userAuthenticated, getMedications)
 petRouter.delete('/medications/delete-medication', userAuthenticated, deleteMedication);
 petRouter.patch('/medications/update-medication', userAuthenticated, updateMedication);
 
-// Medications Schedule Reminder
-petRouter.post('/medications/add-schedule-reminder', userAuthenticated, addMedScheduleReminder);
-petRouter.get('/medications/get-scheduled-reminders', userAuthenticated, getMedScheduledReminders);
-petRouter.delete('/medications/delete-scheduled-reminder', userAuthenticated, deleteMedScheduledReminder);
-petRouter.patch('/medications/update-scheduled-reminder', userAuthenticated, updateMedScheduledReminder);
-petRouter.patch('/medications/markgiven-scheduled-reminder', userAuthenticated, markGivenMedScheduledReminder);
-petRouter.get('/medications/reset-medication-reminders', userAuthenticated, resetMedicationReminders);
+// Medications Reminder
+petRouter.post('/medications/add-med-reminder', userAuthenticated, addMedReminder);
+petRouter.get('/medications/get-med-reminders', userAuthenticated, getMedReminders);
+petRouter.delete('/medications/delete-med-reminder', userAuthenticated, deleteMedReminder);
+petRouter.patch('/medications/update-med-reminder', userAuthenticated, updateMedReminder);
+petRouter.patch('/medications/markgiven-med-reminder', userAuthenticated, markGivenMedReminder);
+petRouter.get('/medications/reset-medication-reminders', userAuthenticated, resetMedReminders);
 petRouter.get('/medications/check-reminder-notifications', userAuthenticated, checkReminderNotifications);
 
 // Pet Health Records

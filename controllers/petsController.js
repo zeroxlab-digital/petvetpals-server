@@ -361,8 +361,8 @@ export const updateMedication = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error });
     }
 }
-// Medication Schedule Reminder
-export const addMedScheduleReminder = async (req, res) => {
+// Medication Reminder
+export const addMedReminder = async (req, res) => {
     try {
         const userId = req.id;
         const { petId } = req.query;
@@ -398,7 +398,7 @@ export const addMedScheduleReminder = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error });
     }
 };
-export const updateMedScheduledReminder = async (req, res) => {
+export const updateMedReminder = async (req, res) => {
     try {
         const { id } = req.query;
         const {
@@ -435,7 +435,7 @@ export const updateMedScheduledReminder = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error });
     }
 };
-export const getMedScheduledReminders = async (req, res) => {
+export const getMedReminders = async (req, res) => {
     try {
         const userId = req.id;
         const { petId } = req.query;
@@ -447,7 +447,7 @@ export const getMedScheduledReminders = async (req, res) => {
         }
         const scheduledReminders = await ScheduleReminder.find({ pet: petId }).populate("medication").populate("pet").select("-__v");
         const filteredReminders = scheduledReminders.filter(reminder => reminder.user || reminder.pet.user.toString() === userId);
-        // console.log("scheduled reminders:", filteredReminders)
+        console.log("scheduled reminders:", filteredReminders)
         // Deletes any reminders that have passed their end date or is not ongoing anymore
         const today = new Date();
         const deleteReminders = filteredReminders.filter(item => item.end_date < today || item.medication.is_ongoing === false);
@@ -459,7 +459,7 @@ export const getMedScheduledReminders = async (req, res) => {
     }
 }
 
-export const deleteMedScheduledReminder = async (req, res) => {
+export const deleteMedReminder = async (req, res) => {
     try {
         const { id } = req.query;
         if (!id) {
@@ -472,7 +472,7 @@ export const deleteMedScheduledReminder = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error });
     }
 }
-export const markGivenMedScheduledReminder = async (req, res) => {
+export const markGivenMedReminder = async (req, res) => {
     try {
         const userId = req.id;
         const id = req.body?.id || req.query?.id;
@@ -511,7 +511,7 @@ export const markGivenMedScheduledReminder = async (req, res) => {
     }
 };
 
-export const resetMedicationReminders = async (req, res) => {
+export const resetMedReminders = async (req, res) => {
     if (req.method !== 'GET') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
@@ -574,6 +574,7 @@ export const resetMedicationReminders = async (req, res) => {
         res.status(500).json({ message: "Reminder reset failed", error });
     }
 };
+
 export const checkReminderNotifications = async (req, res) => {
     try {
         const now = moment();
