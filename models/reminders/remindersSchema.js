@@ -29,7 +29,7 @@ const reminderSchema = new Schema({
     },
     starting_date: {
         type: Date,
-        required: false,
+        required: true,
         default: null
     },
     end_date: {

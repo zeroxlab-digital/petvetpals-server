@@ -26,9 +26,9 @@ reminderRouter.get("/get-reminders", userAuthenticated, async (req, res) => {
 
         const generalReminders = await Reminder.find({ user: id });
 
-        const pets = await Pet.find({ user: id });
-        const petIds = pets.map(p => p._id);
-        const medicationReminders = await ScheduleReminder.find({ pet: { $in: petIds } }).populate("medication", "medication").populate("pet", "name");
+        // const pets = await Pet.find({ user: id });
+        // const petIds = pets.map(p => p._id);
+        // const medicationReminders = await ScheduleReminder.find({ pet: { $in: petIds } }).populate("medication", "medication").populate("pet", "name");
 
         const reminders = [
             ...generalReminders.map(r => ({
@@ -44,21 +44,21 @@ reminderRouter.get("/get-reminders", userAuthenticated, async (req, res) => {
                 reminder_methods: r.reminder_methods,
                 repeat_reminder: r.repeat_reminder,
             })),
-            ...medicationReminders.map(mr => ({
-                _id: mr._id,
-                type: "Medication",
-                medication: mr.medication,
-                pet: mr.pet,
-                frequency: mr.frequency,
-                reminder_date: mr.starting_date || null,
-                starting_date: mr.starting_date || null,
-                end_date: mr.end_date || null,
-                reminder_times: mr.reminder_times,
-                // reminder_offset: mr.reminder_times.map(rt => rt.remind_before).join(", "),
-                notes: `Medication: ${mr.medication.medication} for ${mr.pet.name}`,
-                reminder_methods: mr.reminder_methods,
-                repeat_reminder: mr.repeat_reminder,
-            }))
+            // ...medicationReminders.map(mr => ({
+            //     _id: mr._id,
+            //     type: "Medication",
+            //     medication: mr.medication,
+            //     pet: mr.pet,
+            //     frequency: mr.frequency,
+            //     reminder_date: mr.starting_date || null,
+            //     starting_date: mr.starting_date || null,
+            //     end_date: mr.end_date || null,
+            //     reminder_times: mr.reminder_times,
+            //     // reminder_offset: mr.reminder_times.map(rt => rt.remind_before).join(", "),
+            //     notes: `Medication: ${mr.medication.medication} for ${mr.pet.name}`,
+            //     reminder_methods: mr.reminder_methods,
+            //     repeat_reminder: mr.repeat_reminder,
+            // }))
         ]
 
         res.status(200).json({ success: true, reminders });

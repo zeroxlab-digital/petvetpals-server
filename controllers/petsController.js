@@ -252,6 +252,10 @@ export const addMedication = async (req, res) => {
 export const getMedications = async (req, res) => {
     try {
         const { petId } = req.query;
+        const userId = req.id;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized access!" });
+        }
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
@@ -299,6 +303,15 @@ export const getMedications = async (req, res) => {
             }
             return med;
         });
+
+        // console.log("today:", today);
+        // const medicationReminders = await ScheduleReminder.find().populate("medication").populate("pet");
+        // const filteredReminders = medicationReminders.filter(reminder => reminder.user || reminder.pet.user.toString() === userId);
+        // await ScheduleReminder.deleteMany({
+        //     _id: { $nin: filteredReminders.map(i => i._id) },
+        //     end_date: { $lte: today }
+        // });
+        // console.log("Medication reminders:", filteredReminders);
 
         res.status(200).json({ success: true, medications });
     } catch (error) {
@@ -351,6 +364,7 @@ export const updateMedication = async (req, res) => {
 // Medication Schedule Reminder
 export const addMedScheduleReminder = async (req, res) => {
     try {
+        const userId = req.id;
         const { petId } = req.query;
         const {
             medId,
@@ -367,6 +381,7 @@ export const addMedScheduleReminder = async (req, res) => {
         }
 
         const newScheduleReminder = await ScheduleReminder.create({
+            user: userId,
             pet: petId,
             medication: medId,
             frequency,
@@ -422,19 +437,22 @@ export const updateMedScheduledReminder = async (req, res) => {
 };
 export const getMedScheduledReminders = async (req, res) => {
     try {
+        const userId = req.id;
         const { petId } = req.query;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized access!" });
+        }
         if (!petId) {
             return res.status(404).json({ success: false, message: "Pet ID is required!" })
         }
-        const scheduledReminders = await ScheduleReminder.find({ pet: petId }).populate("medication").select("-__v");
-
+        const scheduledReminders = await ScheduleReminder.find({ pet: petId }).populate("medication").populate("pet").select("-__v");
+        const filteredReminders = scheduledReminders.filter(reminder => reminder.user || reminder.pet.user.toString() === userId);
+        // console.log("scheduled reminders:", filteredReminders)
         // Deletes any reminders that have passed their end date or is not ongoing anymore
         const today = new Date();
-        const deleteReminders = scheduledReminders.filter(item => item.end_date < today || item.medication.is_ongoing === false);
-
+        const deleteReminders = filteredReminders.filter(item => item.end_date < today || item.medication.is_ongoing === false);
         await ScheduleReminder.deleteMany({ _id: { $in: deleteReminders.map(r => r._id) } });
-
-        res.status(200).json({ success: true, scheduledReminders });
+        res.status(200).json({ success: true, scheduledReminders: filteredReminders });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal server error", error });
@@ -456,20 +474,35 @@ export const deleteMedScheduledReminder = async (req, res) => {
 }
 export const markGivenMedScheduledReminder = async (req, res) => {
     try {
+        const userId = req.id;
         const id = req.body?.id || req.query?.id;
         const index = req.body?.index ?? req.query?.index;
-
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized access!" });
+        }
         if (!id || index === undefined) {
             return res.status(400).json({ success: false, message: "Reminder ID and time index are required." });
         }
 
-        const reminder = await ScheduleReminder.findById(id);
+        const reminder = await ScheduleReminder.findById(id).populate("pet");
+        console.log("reminder:", reminder)
         if (!reminder) {
             return res.status(404).json({ success: false, message: "Reminder not found." });
         }
 
-        reminder.reminder_times[index].is_given = true;
-        await reminder.save();
+        // if (reminder.user || reminder.pet?.user.toString() !== userId) {
+        //     return res.status(403).json({ success: false, message: "Access denied." });
+        // }
+        
+        // reminder.reminder_times[index].is_given = true;
+        // await reminder.save();
+
+        const result = await ScheduleReminder.updateOne(
+            { _id: id, user: userId },
+            { $set: { [`reminder_times.${index}.is_given`]: true } }
+        );
+        if (result.matchedCount === 0)
+            return res.status(404).json({ success: false, message: "Reminder not found or not yours." });
 
         res.status(200).json({ success: true, message: "Reminder marked as given." });
     } catch (error) {
