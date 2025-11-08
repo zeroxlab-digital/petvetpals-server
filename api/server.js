@@ -17,6 +17,7 @@ import cron from "node-cron";
 import pushRouter from "../routes/pushRouter.js";
 import { sendPushNotificationsLogic } from "../controllers/pushController.js";
 import reminderRouter from "../routes/reminder/reminderRoutes.js";
+import { resetMedReminders } from "../controllers/petsController.js";
 configDotenv();
 
 // server config
@@ -73,6 +74,23 @@ cron.schedule("*/1 * * * *", async () => {
         console.log(`Sent ${sent} push notifications.`);
     } catch (err) {
         console.error("Cron push error:", err);
+    }
+});
+// CRON job to reset med reminders
+// Runs every 10 minutes
+cron.schedule("*/1 * * * *", async () => {
+    console.log(`[${new Date().toISOString()}] Running reminder reset job...`);
+    try {
+        await resetMedReminders(
+            { method: 'GET' },
+            {
+                status: (code) => ({
+                    json: (data) => console.log(`Reset job response (${code}):`, data)
+                })
+            }
+        );
+    } catch (err) {
+        console.error("Error running reset job:", err);
     }
 });
 

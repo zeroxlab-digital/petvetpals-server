@@ -447,11 +447,13 @@ export const getMedReminders = async (req, res) => {
         }
         const scheduledReminders = await ScheduleReminder.find({ pet: petId }).populate("medication").populate("pet").select("-__v");
         const filteredReminders = scheduledReminders.filter(reminder => reminder.user || reminder.pet.user.toString() === userId);
-        console.log("scheduled reminders:", filteredReminders)
         // Deletes any reminders that have passed their end date or is not ongoing anymore
         const today = new Date();
         const deleteReminders = filteredReminders.filter(item => item.end_date < today || item.medication.is_ongoing === false);
         await ScheduleReminder.deleteMany({ _id: { $in: deleteReminders.map(r => r._id) } });
+
+        console.log("scheduled reminders:", filteredReminders[0].reminder_times)
+
         res.status(200).json({ success: true, scheduledReminders: filteredReminders });
     } catch (error) {
         console.log(error);
@@ -477,30 +479,22 @@ export const markGivenMedReminder = async (req, res) => {
         const userId = req.id;
         const id = req.body?.id || req.query?.id;
         const index = req.body?.index ?? req.query?.index;
-        if (!userId) {
-            return res.status(401).json({ message: "Unauthorized access!" });
-        }
+
+        if (!userId) return res.status(401).json({ message: "Unauthorized access!" });
         if (!id || index === undefined) {
             return res.status(400).json({ success: false, message: "Reminder ID and time index are required." });
         }
 
-        const reminder = await ScheduleReminder.findById(id).populate("pet");
-        console.log("reminder:", reminder)
-        if (!reminder) {
-            return res.status(404).json({ success: false, message: "Reminder not found." });
-        }
-
-        // if (reminder.user || reminder.pet?.user.toString() !== userId) {
-        //     return res.status(403).json({ success: false, message: "Access denied." });
-        // }
-        
-        // reminder.reminder_times[index].is_given = true;
-        // await reminder.save();
-
         const result = await ScheduleReminder.updateOne(
-            { _id: id, user: userId },
-            { $set: { [`reminder_times.${index}.is_given`]: true } }
+            { _id: id },
+            {
+                $set: {
+                    [`reminder_times.${index}.is_given`]: true,
+                    [`reminder_times.${index}.last_reset`]: new Date()
+                }
+            }
         );
+
         if (result.matchedCount === 0)
             return res.status(404).json({ success: false, message: "Reminder not found or not yours." });
 
@@ -512,10 +506,6 @@ export const markGivenMedReminder = async (req, res) => {
 };
 
 export const resetMedReminders = async (req, res) => {
-    if (req.method !== 'GET') {
-        return res.status(405).json({ message: 'Method not allowed' });
-    }
-
     try {
         const now = moment();
         const reminders = await ScheduleReminder.find();
@@ -523,39 +513,38 @@ export const resetMedReminders = async (req, res) => {
         let resetCount = 0;
 
         for (const reminder of reminders) {
+            if (reminder.end_date && moment(reminder.end_date).isBefore(now)) continue;
+
             let reminderUpdated = false;
 
             for (let i = 0; i < (reminder.reminder_times || []).length; i++) {
                 const rt = reminder.reminder_times[i];
                 const [hour, minute] = rt.time.split(':').map(Number);
-
                 const reminderTimeToday = moment().set({ hour, minute, second: 0, millisecond: 0 });
-                const lastReset = rt.last_reset ? moment(rt.last_reset) : moment(reminder.starting_date);
+                const lastReset = moment(rt.last_reset || reminder.starting_date);
 
                 let shouldReset = false;
 
                 switch (reminder.frequency) {
                     case 'once_daily':
                     case 'twice_daily':
-                        shouldReset = now.isAfter(reminderTimeToday) && now.diff(lastReset, 'days') >= 1;
+                        shouldReset = now.diff(lastReset, 'days') >= 1 && now.isAfter(reminderTimeToday);
                         break;
                     case 'every_other_day':
-                        shouldReset = now.isAfter(reminderTimeToday) &&
-                            now.diff(reminder.starting_date, 'days') % 2 === 0 &&
-                            now.diff(lastReset, 'days') >= 1;
+                        shouldReset = now.diff(lastReset, 'days') >= 2 && now.isAfter(reminderTimeToday);
                         break;
                     case 'once_weekly':
-                        shouldReset = now.isAfter(reminderTimeToday) && now.diff(lastReset, 'days') >= 7;
+                        shouldReset = now.diff(lastReset, 'days') >= 7 && now.isAfter(reminderTimeToday);
                         break;
                     case 'twice_weekly':
-                        shouldReset = now.isAfter(reminderTimeToday) && now.diff(lastReset, 'days') >= 3;
+                        shouldReset = now.diff(lastReset, 'days') >= 3 && now.isAfter(reminderTimeToday);
                         break;
                     case 'once_monthly':
-                        shouldReset = now.isAfter(reminderTimeToday) && now.diff(lastReset, 'months') >= 1;
+                        shouldReset = now.diff(lastReset, 'months') >= 1 && now.isAfter(reminderTimeToday);
                         break;
                 }
 
-                if (shouldReset) {
+                if (shouldReset && rt.is_given) {
                     reminder.reminder_times[i].is_given = false;
                     reminder.reminder_times[i].last_reset = now.toDate();
                     reminderUpdated = true;
@@ -563,14 +552,12 @@ export const resetMedReminders = async (req, res) => {
                 }
             }
 
-            if (reminderUpdated) {
-                await reminder.save();
-            }
+            if (reminderUpdated) await reminder.save();
         }
 
         return res.status(200).json({ success: true, message: `Reset ${resetCount} reminder times.` });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: "Reminder reset failed", error });
     }
 };
