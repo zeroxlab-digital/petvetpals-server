@@ -3,7 +3,7 @@ import { v2 as cloudinary } from "cloudinary";
 import connectCloudinary from "../config/cloudinary.js"; // Import the config function to upload file
 import { Medication, ScheduleReminder } from "../models/medicationsModel.js";
 import { AllergyCondition, MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
-import moment from "moment";
+import moment from "moment-timezone";
 import { SymptomReport } from "../models/symptom-checker/SymptomReport.js";
 import { Appointment } from "../models/appointmentModel.js";
 connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
@@ -452,7 +452,7 @@ export const getMedReminders = async (req, res) => {
         const deleteReminders = filteredReminders.filter(item => item.end_date < today || item.medication.is_ongoing === false);
         await ScheduleReminder.deleteMany({ _id: { $in: deleteReminders.map(r => r._id) } });
 
-        console.log("scheduled reminders:", filteredReminders[0].reminder_times)
+        // console.log("scheduled reminders:", filteredReminders[0].reminder_times)
 
         res.status(200).json({ success: true, scheduledReminders: filteredReminders });
     } catch (error) {
@@ -564,23 +564,30 @@ export const resetMedReminders = async (req, res) => {
 
 export const checkReminderNotifications = async (req, res) => {
     try {
-        const now = moment();
+        const now = moment().tz("America/Chicago"); // ✅ timezone for consistency
         const reminders = await ScheduleReminder.find()
             .populate({ path: "medication", select: "medication dosage remaining instructions" })
-            .populate({ path: "pet", select: "type name age gender breed" })
-        // console.log(reminders)
+            .populate({ path: "pet", select: "type name age gender breed" });
+
         const dueReminders = [];
 
         reminders.forEach(reminder => {
             (reminder.reminder_times || []).forEach((rt, index) => {
                 if (rt.is_given || rt.skipped) return;
-                // console.log("rt:", rt)
-                const [hour, minute] = rt.time.split(":").map(Number);
-                const reminderTime = moment(reminder.starting_date).set({ hour, minute });
 
-                const remindBeforeMins = parseInt(rt.remind_before || '10');
-                const diffMinutes = reminderTime.diff(now, 'minutes');
-                // console.log("reminder:", reminder)
+                const [hour, minute] = rt.time.split(":").map(Number);
+                
+                // Uses today's date instead of starting_date to avoid old timestamps
+                const reminderTime = moment().tz("America/Chicago").set({
+                    hour,
+                    minute,
+                    second: 0,
+                    millisecond: 0
+                });
+
+                const remindBeforeMins = parseInt(rt.remind_before || "10");
+                const diffMinutes = reminderTime.diff(now, "minutes");
+
                 if (diffMinutes <= remindBeforeMins && diffMinutes >= remindBeforeMins - 1) {
                     dueReminders.push({
                         reminderId: reminder._id,
@@ -595,6 +602,7 @@ export const checkReminderNotifications = async (req, res) => {
 
         res.status(200).json({ success: true, dueReminders });
     } catch (error) {
+        console.error("checkReminderNotifications error:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 };

@@ -66,7 +66,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
-// CRON job to send push notifications
+// CRON job running every 1 minute to send push notifications
 cron.schedule("*/1 * * * *", async () => {
     console.log("Running reminder push task...");
     try {
@@ -76,9 +76,10 @@ cron.schedule("*/1 * * * *", async () => {
         console.error("Cron push error:", err);
     }
 });
+
 // CRON job to reset med reminders
-// Runs every 10 minutes
-cron.schedule("*/1 * * * *", async () => {
+// Runs every 10 minute
+cron.schedule("*/10 * * * *", async () => {
     console.log(`[${new Date().toISOString()}] Running reminder reset job...`);
     try {
         await resetMedReminders(

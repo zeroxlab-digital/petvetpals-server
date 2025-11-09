@@ -1,9 +1,11 @@
 import express from "express";
-import { savePushSubscription, sendPushNotifications } from "../controllers/pushController.js";
+import { savePushSubscription } from "../controllers/pushController.js";
+import userAuthenticated from "../middlewares/userAuthenticated.js";
 
 const pushRouter = express.Router();
 
-pushRouter.post("/subscribe", savePushSubscription);
-pushRouter.post("/send", sendPushNotifications);
+pushRouter.post("/subscribe", userAuthenticated, savePushSubscription);
+// API ENDPOINT TEST
+// pushRouter.post("/send", sendPushNotifications);
 
 export default pushRouter;

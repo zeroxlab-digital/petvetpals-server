@@ -105,6 +105,7 @@ const scheduleReminderSchema = mongoose.Schema({
             },
             last_reset: { type: Date, default: null },
             is_given: { type: Boolean, default: false },
+            last_notified: { type: Date },
             skipped: { type: Boolean, default: false }
         }
     ],

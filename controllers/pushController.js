@@ -1,10 +1,11 @@
 import { ScheduleReminder } from "../models/medicationsModel.js";
 import { PushSubscription } from "../models/pushSubscription.js";
 import webpush from "../utils/webPush.js";
-import moment from "moment";
+import moment from "moment-timezone";
 
 export const savePushSubscription = async (req, res) => {
     try {
+        const userId = req.id;
         const sub = req.body;
         if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) {
             return res.status(400).json({ success: false, message: "Invalid subscription data" });
@@ -15,7 +16,7 @@ export const savePushSubscription = async (req, res) => {
         if (!existing) {
             await PushSubscription.create({
                 ...sub,
-                user: req.user?._id || null, // Optional
+                user: userId || null,
             });
         }
 
@@ -27,63 +28,78 @@ export const savePushSubscription = async (req, res) => {
 };
 
 export const sendPushNotificationsLogic = async () => {
-    const now = moment();
+    const now = moment().tz("America/Chicago"); // need to adjust later as needed
     const subscriptions = await PushSubscription.find();
+    // console.log("subscriptions:", subscriptions);
     const reminders = await ScheduleReminder.find()
         .populate({ path: "medication", select: "medication dosage" })
-        .populate({ path: "pet", select: "name" });
-
+        .populate({ path: "pet", select: "name user" })
+        .populate({ path: "user", select: "_id" });
+    // console.log("reminders:", reminders);
     const dueReminders = [];
 
-    reminders.forEach((reminder) => {
-        (reminder.reminder_times || []).forEach((rt, index) => {
-            if (rt.is_given || rt.skipped) return;
+    for (const reminder of reminders) {
+        const tz = reminder.timezone || "America/Chicago";
+        const currentDay = moment().tz(tz);
+
+        for (const [index, rt] of (reminder.reminder_times || []).entries()) {
+            if (rt.is_given || rt.skipped) continue;
 
             const [hour, minute] = rt.time.split(":").map(Number);
-            const reminderTime = moment(reminder.starting_date).set({ hour, minute });
+            const reminderTime = currentDay.clone().set({ hour, minute, second: 0, millisecond: 0 });
             const remindBeforeMins = parseInt(rt.remind_before || "10");
             const diffMinutes = reminderTime.diff(now, "minutes");
 
-            if (diffMinutes <= remindBeforeMins && diffMinutes >= remindBeforeMins - 1) {
+            // Prevent double notifications
+            if (rt.last_notified && now.diff(rt.last_notified, "minutes") < 2) continue;
+
+            if (diffMinutes <= remindBeforeMins && diffMinutes >= -1) {
                 dueReminders.push({
-                    reminderId: reminder._id,
+                    reminder,
                     index,
                     pet: reminder.pet,
                     medication: reminder.medication || {},
                     reminderTime: rt.time,
                     minutesLeft: diffMinutes,
                 });
+
+                // Update the last_notified
+                reminder.reminder_times[index].last_notified = now;
+                await reminder.save();
             }
-        });
-    });
+        }
+    }
 
     let sent = 0;
 
-    for (const sub of subscriptions) {
-        for (const reminder of dueReminders) {
+    for (const due of dueReminders) {
+        const { reminder, pet, medication, reminderTime, minutesLeft } = due;
+
+        // This'll determine userId (reminder.user or pet.user)
+        const userId = reminder.user?._id?.toString() || pet.user.toString();
+
+        // Filter subscriptions for that user
+        const userSubs = subscriptions.filter((s) => s.user?.toString() === userId);
+
+        for (const sub of userSubs) {
             try {
                 await webpush.sendNotification(
                     sub,
                     JSON.stringify({
-                        title: `💊 ${reminder.medication.medication} Reminder`,
-                        message: `🐾 ${reminder.pet.name}'s medication is due at ${reminder.reminderTime} (${reminder.minutesLeft} min left).`,
+                        title: `💊 ${medication.medication} Reminder`,
+                        message: `🐾 ${pet.name}'s medication is due at ${reminderTime} (${minutesLeft} min left).`,
                         data: {
                             reminderId: reminder._id,
-                            index: reminder.index, // index of the reminder_time
+                            index: due.index,
                         },
                         actions: [
-                            {
-                                action: "mark-as-given",
-                                title: "Mark as Given"
-                            }
-                        ]
+                            { action: "mark-as-given", title: "Mark as Given" },
+                        ],
                     })
                 );
                 sent++;
             } catch (err) {
                 console.warn("Push failed for", sub.endpoint);
-                console.warn(err.body);
-
                 if (err.statusCode === 410 || err.statusCode === 404) {
                     await PushSubscription.deleteOne({ endpoint: sub.endpoint });
                     console.log("Deleted expired subscription:", sub.endpoint);
@@ -95,12 +111,13 @@ export const sendPushNotificationsLogic = async () => {
     return sent;
 };
 
-export const sendPushNotifications = async (req, res) => {
-    try {
-        const sent = await sendPushNotificationsLogic();
-        return res.json({ success: true, sent });
-    } catch (err) {
-        console.error("Push error:", err);
-        return res.status(500).json({ success: false, error: err.message });
-    }
-};
+// API ENDPOINT TRY PURPOSE
+// export const sendPushNotifications = async (req, res) => {
+//     try {
+//         const sent = await sendPushNotificationsLogic();
+//         return res.json({ success: true, sent });
+//     } catch (err) {
+//         console.error("Push error:", err);
+//         return res.status(500).json({ success: false, error: err.message });
+//     }
+// };
