@@ -1,5 +1,5 @@
 import express from "express";
-import { addAllergyCondition, addMedicalHistory, addMedication, addMedReminder, addPetProfile, addVaccination, checkReminderNotifications, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteMedReminder, deleteVaccination, getAllergiesConditions, getDetailedPetData, getMedicalHistory, getMedications, getMedReminders, getPetProfiles, getVaccinations, logActivityLevel, logEnergyLevel, markGivenMedReminder, resetMedReminders, updateAllergyCondition, updateMedicalHistory, updateMedication, updateMedReminder, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
+import { addAllergyCondition, addMedicalHistory, addMedication, addMedReminder, addPetProfile, addVaccination, checkMedReminderNotifications, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteMedReminder, deleteVaccination, getAllergiesConditions, getDetailedPetData, getMedicalHistory, getMedications, getMedReminders, getPetProfiles, getVaccinations, logActivityLevel, logEnergyLevel, markGivenMedReminder, resetMedReminders, updateAllergyCondition, updateMedicalHistory, updateMedication, updateMedReminder, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
 import userAuthenticated from "../middlewares/userAuthenticated.js";
 import upload from "../middlewares/multer.js";
 const petRouter = express.Router();
@@ -25,7 +25,7 @@ petRouter.delete('/medications/delete-med-reminder', userAuthenticated, deleteMe
 petRouter.patch('/medications/update-med-reminder', userAuthenticated, updateMedReminder);
 petRouter.patch('/medications/markgiven-med-reminder', userAuthenticated, markGivenMedReminder);
 petRouter.get('/medications/reset-medication-reminders', userAuthenticated, resetMedReminders);
-petRouter.get('/medications/check-reminder-notifications', userAuthenticated, checkReminderNotifications);
+petRouter.get('/medications/check-med-reminder-notifications', userAuthenticated, checkMedReminderNotifications);
 
 // Pet Health Records
 petRouter.post('/health-record/add-medical-history', userAuthenticated, addMedicalHistory);

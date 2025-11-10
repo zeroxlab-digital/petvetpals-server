@@ -562,7 +562,7 @@ export const resetMedReminders = async (req, res) => {
     }
 };
 
-export const checkReminderNotifications = async (req, res) => {
+export const checkMedReminderNotifications = async (req, res) => {
     try {
         const now = moment().tz("America/Chicago"); // ✅ timezone for consistency
         const reminders = await ScheduleReminder.find()

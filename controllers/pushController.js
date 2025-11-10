@@ -27,7 +27,7 @@ export const savePushSubscription = async (req, res) => {
     }
 };
 
-export const sendPushNotificationsLogic = async () => {
+export const sendMedPushNotificationsLogic = async () => {
     const now = moment().tz("America/Chicago"); // need to adjust later as needed
     const subscriptions = await PushSubscription.find();
     // console.log("subscriptions:", subscriptions);
@@ -114,7 +114,7 @@ export const sendPushNotificationsLogic = async () => {
 // API ENDPOINT TRY PURPOSE
 // export const sendPushNotifications = async (req, res) => {
 //     try {
-//         const sent = await sendPushNotificationsLogic();
+//         const sent = await sendMedPushNotificationsLogic();
 //         return res.json({ success: true, sent });
 //     } catch (err) {
 //         console.error("Push error:", err);
