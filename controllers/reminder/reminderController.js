@@ -141,6 +141,33 @@ export const resetReminders = async (req, res) => {
     }
 };
 
+export const markGivenReminder = async (req, res) => {
+    try {
+        const userId = req.id;
+        const reminderId = req.query?.id;
+        const timeIndex = req.query?.timeIndex;
+        // console.log("reminderId & timeIndex::", reminderId, timeIndex);
+        if(!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized access. Please log in."});
+        }
+        if(!reminderId || timeIndex === undefined) {
+            return res.status(400).json({ success: false, message: "Invalid request parameters. Reminder ID and time index are required."});
+        }
+
+        const updatedReminder = await Reminder.findOneAndUpdate({ _id: reminderId, user: userId }, {
+            $set: {
+                [`reminder_times.${timeIndex}.is_given`]: true,
+                [`reminder_times.${timeIndex}.last_given`]: new Date(),
+            }
+        }, { new: true });
+        // console.log("Updated reminder:", updatedReminder);
+        res.status(200).json({ success: true, message: "Reminder marked as given successfully", reminder: updatedReminder });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ success: false, message: "Failed to mark reminder as given! Please try again later.", error: error.message });
+    }
+}
+
 export const deleteReminder = async (req, res) => {
     try {
         const id = req.id;
