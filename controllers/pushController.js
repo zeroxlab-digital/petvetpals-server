@@ -29,18 +29,18 @@ export const savePushSubscription = async (req, res) => {
 };
 
 export const sendMedPushNotificationsLogic = async () => {
-    const now = moment().tz("America/Chicago");
+    const now = moment().tz("UTC");
     const subscriptions = await PushSubscription.find();
 
     const reminders = await ScheduleReminder.find()
         .populate({ path: "medication", select: "medication dosage" })
         .populate({ path: "pet", select: "name user" })
-        .populate({ path: "user", select: "_id" });
+        .populate({ path: "user", select: "timezone" });
 
     const dueReminders = [];
 
     for (const reminder of reminders) {
-        const tz = reminder.timezone || "America/Chicago";
+        const tz = reminder.user?.timezone || "UTC";
         const currentDay = moment().tz(tz);
 
         for (const [index, rt] of (reminder.reminder_times || []).entries()) {
@@ -113,16 +113,15 @@ export const sendMedPushNotificationsLogic = async () => {
 };
 
 export const sendPushNotificationsLogic = async () => {
-    const now = moment().tz("America/Chicago");
+    const now = moment().tz("UTC");
     const subscriptions = await PushSubscription.find();
 
-    const reminders = await Reminder.find()
-        .populate("reminder_times reminder_methods")
+    const reminders = await Reminder.find().populate({ path: "user", select: "timezone" })
 
     const dueReminders = [];
 
     for (const reminder of reminders) {
-        const tz = reminder.timezone || "America/Chicago";
+        const tz = reminder.user?.timezone || "UTC";
         const currentDay = moment().tz(tz);
 
         for (const [index, rt] of (reminder.reminder_times || []).entries()) {
@@ -151,7 +150,7 @@ export const sendPushNotificationsLogic = async () => {
     for (const due of dueReminders) {
         const { reminder, reminderTime, minutesLeft } = due;
 
-        const userSubs = subscriptions.filter((s) => s.user?.toString() === reminder.user?.toString());
+        const userSubs = subscriptions.filter((s) => s.user?.toString() === reminder.user?._id.toString());
 
         for (const sub of userSubs) {
             try {

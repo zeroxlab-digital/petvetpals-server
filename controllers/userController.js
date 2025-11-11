@@ -97,3 +97,21 @@ export const updateUserDetails = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal server error", error });
     }
 }
+
+export const updateUserTimezone = async (req, res) => {
+    try {
+        const userId = req.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized access" });
+        }
+        const { timezone } = req.body;
+        const updateUser = await User.findByIdAndUpdate({ _id: userId }, {
+            timezone,
+        }, { new: true, runValidators: true })
+        console.log(updateUser);
+        res.status(200).json({ success: true, message: "User timezone updated!" })
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ success: false, message: "Internal server error while updating timezone", error });
+    }
+}

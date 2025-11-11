@@ -34,6 +34,10 @@ const userSchema = mongoose.Schema({
     zip: {
         type: String,
         default: null,
+    },
+    timezone: {
+        type: String,
+        default: "UTC",
     }
 }, { timestamps: true })
 
