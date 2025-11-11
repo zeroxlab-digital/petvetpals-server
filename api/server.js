@@ -15,7 +15,7 @@ import nutritionistRouter from "../routes/nutritionist/nutritionistRoutes.js";
 import allergyCoachRouter from "../routes/allergy-itch-coach/allergyCoachRoutes.js";
 import cron from "node-cron";
 import pushRouter from "../routes/pushRouter.js";
-import { sendMedPushNotificationsLogic } from "../controllers/pushController.js";
+import { sendMedPushNotificationsLogic, sendPushNotificationsLogic } from "../controllers/pushController.js";
 import reminderRouter from "../routes/reminder/reminderRoutes.js";
 import { resetMedReminders } from "../controllers/petsController.js";
 import { resetReminders } from "../controllers/reminder/reminderController.js";
@@ -71,8 +71,10 @@ app.options('*', cors(corsOptions));
 cron.schedule("*/1 * * * *", async () => {
     console.log("Running reminder push task...");
     try {
-        const sent = await sendMedPushNotificationsLogic();
-        console.log(`Sent ${sent} push notifications.`);
+        const med_reminder_sent = await sendMedPushNotificationsLogic();
+        console.log(`Sent ${med_reminder_sent} med push notifications.`);
+        const reminder_sent = await sendPushNotificationsLogic();
+        console.log(`Sent ${reminder_sent} general push notifications.`);
     } catch (err) {
         console.error("Cron push error:", err);
     }
@@ -80,7 +82,7 @@ cron.schedule("*/1 * * * *", async () => {
 
 // CRON job to reset med reminders
 // Runs every 10 minute
-cron.schedule("*/1 * * * *", async () => {
+cron.schedule("*/10 * * * *", async () => {
     console.log(`[${new Date().toISOString()}] Running reminder reset job...`);
     try {
         await resetReminders(

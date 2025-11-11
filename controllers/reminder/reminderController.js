@@ -144,8 +144,8 @@ export const resetReminders = async (req, res) => {
 export const markGivenReminder = async (req, res) => {
     try {
         const userId = req.id;
-        const reminderId = req.query?.id;
-        const timeIndex = req.query?.timeIndex;
+        const reminderId = req.query?.id || req.body?.id;
+        const timeIndex = req.query?.timeIndex || req.body?.timeIndex;
         // console.log("reminderId & timeIndex::", reminderId, timeIndex);
         if(!userId) {
             return res.status(401).json({ success: false, message: "Unauthorized access. Please log in."});

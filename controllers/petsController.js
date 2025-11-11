@@ -479,6 +479,7 @@ export const markGivenMedReminder = async (req, res) => {
         const userId = req.id;
         const id = req.body?.id || req.query?.id;
         const index = req.body?.index ?? req.query?.index;
+        // console.log("ID & Index::", id, index);
 
         if (!userId) return res.status(401).json({ message: "Unauthorized access!" });
         if (!id || index === undefined) {
