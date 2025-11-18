@@ -1,12 +1,13 @@
 import { Pet } from "../models/petModel.js";
 import { v2 as cloudinary } from "cloudinary";
-import connectCloudinary from "../config/cloudinary.js"; // Import the config function to upload file
+import connectCloudinary from "../config/cloudinary.js";
 import { Medication, ScheduleReminder } from "../models/medicationsModel.js";
 import { AllergyCondition, MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
 import moment from "moment-timezone";
 import { SymptomReport } from "../models/symptom-checker/SymptomReport.js";
 import { Appointment } from "../models/appointmentModel.js";
-connectCloudinary(); // Calls the function to configure Cloudinary as uploading from this file
+import calculateOverallHealth from "../utils/calculateOverallHealth.js";
+connectCloudinary();
 
 export const getDetailedPetData = async (req, res) => {
     try {
@@ -14,6 +15,9 @@ export const getDetailedPetData = async (req, res) => {
         const { id } = req.query;
 
         const pet = await Pet.findById(id).select("-user -__v");
+
+        const overall_health = calculateOverallHealth(pet);
+        console.log("Overall Pet Health:", overall_health)
 
         const upcoming_vaccination = await Vaccination.findOne({ pet: pet._id, next_due: { $gte: new Date() } }).sort({ next_due: 1 }).limit(1).select("vaccine next_due status notes");
 
@@ -113,7 +117,7 @@ export const getDetailedPetData = async (req, res) => {
         const pending_appointments = await Appointment.find({ user: userId, status: 'pending' })
             .sort({ date: 1 });
 
-        res.status(200).json({ pet, upcoming_vaccination, recent_symptoms, confirmed_appointment, pending_appointments, next_reminder });
+        res.status(200).json({ upcoming_vaccination, recent_symptoms, confirmed_appointment, pending_appointments, next_reminder, overall_health });
     } catch (error) {
         console.log(error);
         res.status(500).json({ succcess: false, message: "Inernal server error", error });
@@ -577,7 +581,7 @@ export const checkMedReminderNotifications = async (req, res) => {
                 if (rt.is_given || rt.skipped) return;
 
                 const [hour, minute] = rt.time.split(":").map(Number);
-                
+
                 // Uses today's date instead of starting_date to avoid old timestamps
                 const reminderTime = moment().tz("America/Chicago").set({
                     hour,

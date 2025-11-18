@@ -53,7 +53,7 @@ const petSchema = mongoose.Schema({
     ],
     overall_health: {
         type: Number,
-        required: false,
+        default: 70,
         min: 0,
         max: 100
     }
