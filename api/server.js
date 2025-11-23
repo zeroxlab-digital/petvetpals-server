@@ -120,9 +120,9 @@ app.use("/api/pet", petRouter);
 
 // Symptom router
 app.use("/api/symptoms", symptomRouter);
-
-// Nutritionist
+// Nutritionist router
 app.use("/api/nutritionist", nutritionistRouter);
+// Allergy and Itch Coach router
 app.use("/api/allergy-itch-coach", allergyCoachRouter);
 
 // Reminder router
