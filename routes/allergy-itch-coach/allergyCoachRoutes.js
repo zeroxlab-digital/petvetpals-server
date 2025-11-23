@@ -146,7 +146,7 @@ allergyCoachRouter.post("/gpt", async (req, res) => {
 allergyCoachRouter.post("/save", async (req, res) => {
     try {
         const { pet, episode } = req.body;
-        if(!pet || !episode) {
+        if (!pet || !episode) {
             throw new Error({ message: "Pet ID and episode fields are required!" })
         }
         const allergyItchReport = new AllergyItchReport({
@@ -154,9 +154,23 @@ allergyCoachRouter.post("/save", async (req, res) => {
             episode
         });
         await allergyItchReport.save();
-        res.status(200).json({ success: true, message: "Allergy & Itch report saved successfully."});
+        res.status(200).json({ success: true, message: "Allergy & Itch report saved successfully." });
     }
     catch (error) {
+        console.log(error);
+        res.status(400).json({ message: "Internal server error", error })
+    }
+})
+
+allergyCoachRouter.get("/history/:petId", async (req, res) => {
+    try {
+        const { petId } = req.params;
+        if (!petId) {
+            throw new Error({ message: "Pet ID is required!" })
+        }
+        const reports = await AllergyItchReport.find({ pet: petId }).sort({ createdAt: -1 });
+        res.status(200).json({ success: true, reports });
+    } catch (error) {
         console.log(error);
         res.status(400).json({ message: "Internal server error", error })
     }
