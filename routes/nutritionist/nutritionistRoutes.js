@@ -5,18 +5,6 @@ configDotenv();
 
 const nutritionistRouter = express.Router();
 
-// Empty JSON structure fallback
-// const emptyNutritionPlan = {
-//     dailyCalories: 0,
-//     proteinNeeds: "",
-//     fatNeeds: "",
-//     carbNeeds: "",
-//     feedingSchedule: [],
-//     recommendedIngredients: [],
-//     avoidIngredients: [],
-//     brandRecommendations: [],
-// };
-
 // Extract first valid JSON object from string
 function extractJSONFromAI(text) {
     try {
@@ -42,35 +30,6 @@ function extractJSONFromAI(text) {
         return null;
     }
 }
-
-// Repaires JSON using free model if needed
-// async function repairJSONWithFreeModel(brokenOutput) {
-//     try {
-//         const repairPrompt = `
-// Fix the following broken JSON. Return only valid JSON. Preserve all original data.
-// Input:
-// ${brokenOutput}
-// `;
-//         const response = await fetch("https://api.together.xyz/inference", {
-//             method: "POST",
-//             headers: {
-//                 "Authorization": `Bearer ${process.env.TOGETHER_API_KEY}`,
-//                 "Content-Type": "application/json",
-//             },
-//             body: JSON.stringify({
-//                 model: "meta-llama/Llama-3-8b-chat-hf",
-//                 prompt: repairPrompt,
-//                 max_tokens: 1500,
-//                 temperature: 0,
-//             }),
-//         });
-//         const data = await response.json();
-//         const fixedText = data.output?.choices?.[0]?.text?.trim();
-//         return extractJSONFromAI(fixedText) || null;
-//     } catch {
-//         return null;
-//     }
-// }
 
 nutritionistRouter.post("/ask-nutritionist", async (req, res) => {
     try {
@@ -160,3 +119,4 @@ nutritionistRouter.post("/ask-nutritionist", async (req, res) => {
 });
 
 export default nutritionistRouter;
+
