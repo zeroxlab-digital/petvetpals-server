@@ -17,7 +17,8 @@ export const getDetailedPetData = async (req, res) => {
         const pet = await Pet.findById(id).select("-user -__v");
 
         const overall_health = calculateOverallHealth(pet);
-        console.log("Overall Pet Health:", overall_health)
+
+        await Pet.findByIdAndUpdate(id, { overall_health }, { new: true });
 
         const upcoming_vaccination = await Vaccination.findOne({ pet: pet._id, next_due: { $gte: new Date() } }).sort({ next_due: 1 }).limit(1).select("vaccine next_due status notes");
 
@@ -106,6 +107,8 @@ export const getDetailedPetData = async (req, res) => {
             // Step 5: Limit to the next upcoming one
             { $limit: 1 },
         ]);
+
+        // console.log("upcoming:", next_reminder);
 
         // Not based on Pet itself but the user
         const confirmed_appointment = await Appointment.findOne({ user: userId, status: 'confirmed' })
