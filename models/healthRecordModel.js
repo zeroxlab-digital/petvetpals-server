@@ -105,8 +105,8 @@ const allergyConditionSchema = new Schema({
     },
     diagnosedDate: {
         type: Date,
-        default: new Date(),
-        required: true
+        default: null,
+        required: false
     },
     description: {
         type: String,
