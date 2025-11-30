@@ -717,19 +717,36 @@ export const addVaccination = async (req, res) => {
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const { vaccine, provider, date_given, next_due, status, notes } = req.body;
+        const { vaccine, provider, date_given, next_due, notes } = req.body;
         if (!vaccine) {
             return res.status(400).json({ message: "Vaccine is required" });
         }
+
+        const today = new Date();
+
+        let vaccination_status;
+
+        switch (true) {
+            case new Date(next_due) > today:
+                vaccination_status = "up-to-date";
+                break;
+            case new Date(next_due) < today:
+                vaccination_status = "overdue";
+                break;
+            default:
+                vaccination_status = "due";
+        }
+
         const newVaccination = await Vaccination.create({
             pet: petId,
             vaccine,
             provider,
             date_given,
             next_due,
-            status,
-            notes
+            notes,
+            status: vaccination_status,
         });
+        console.log("new vaccination:", newVaccination)
         res.status(201).json({ success: true, message: "Vaccination added successfully!", newVaccination });
     } catch (error) {
         console.log(error);
