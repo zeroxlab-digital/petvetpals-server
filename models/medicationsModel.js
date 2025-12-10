@@ -56,10 +56,6 @@ const medicationSchema = mongoose.Schema({
         default: null,
         required: false
     },
-    prescribed_by: {
-        type: String,
-        required: false
-    }
 }, { timestamps: true })
 
 export const Medication = mongoose.model("Medication", medicationSchema);

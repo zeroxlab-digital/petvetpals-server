@@ -228,7 +228,7 @@ export const addMedication = async (req, res) => {
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const { medication, dosage, frequency, remaining, start_date, end_date, is_ongoing, reason, timeOfDay, prescribed_by, instructions, } = req.body;
+        const { medication, dosage, frequency, remaining, start_date, end_date, is_ongoing, reason, timeOfDay, instructions, } = req.body;
 
         if (!medication || !frequency || !start_date) {
             return res.status(400).json({ message: "All fields are required!" });
@@ -245,7 +245,6 @@ export const addMedication = async (req, res) => {
             end_date,
             is_ongoing,
             reason,
-            prescribed_by,
             instructions
         })
         console.log("new medication:", newMedication)
@@ -347,14 +346,13 @@ export const deleteMedication = async (req, res) => {
 export const updateMedication = async (req, res) => {
     try {
         const { id } = req.query;
-        const { medication, dosage, frequency, end_date, prescribed_by } = req.body;
+        const { medication, dosage, frequency, end_date } = req.body;
 
         const updatedMedication = await Medication.findByIdAndUpdate(id, {
             medication,
             dosage,
             frequency,
             end_date,
-            prescribed_by
         }, {
             new: true,
             runValidators: true
