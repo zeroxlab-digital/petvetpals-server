@@ -23,7 +23,7 @@ configDotenv();
 
 // server config
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 connectDB();
 connectCloudinary();
 
@@ -31,39 +31,52 @@ connectCloudinary();
 app.use(express.json());
 app.use(cookieParser());
 
-// List of hostnames allowed for CORS
-const allowedHostnames = [
-    'localhost',                  // for dev
-    'petvetpals.com',             // production
-    'www.petvetpals.com',         // production with www
-    'petvetpals.vercel.app',      // Vercel deployment
+// List of allowed origins (full URLs)
+const allowedOrigins = [
+    'http://localhost:3000',           // local dev (adjust port as needed)
+    'https://petvetpals.com',          // production
+    'https://www.petvetpals.com',      // production with www
+    'https://petvetpals.vercel.app',   // Vercel deployment
 ];
 
 // CORS options
 const corsOptions = {
     origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, Postman, server-to-server)
         if (!origin) {
-            // This will allow requests with no origin (Postman, curl, server-to-server)
             return callback(null, true);
         }
 
+        // Check if origin is in allowed list
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        // Also allow any origin from allowed hostnames (for dynamic ports/subdomains)
         try {
             const url = new URL(origin);
+            const allowedHostnames = [
+                'localhost',
+                'petvetpals.com',
+                'www.petvetpals.com',
+                'petvetpals.vercel.app',
+            ];
+
             if (allowedHostnames.includes(url.hostname)) {
                 return callback(null, true);
-            } else {
-                console.log('Blocked by CORS:', origin);
-                return callback(new Error('Not allowed by CORS'));
             }
         } catch (err) {
-            console.log('Invalid origin:', origin);
-            return callback(new Error('Invalid origin'));
+            console.log('Invalid origin format:', origin);
         }
+
+        console.log('Blocked by CORS:', origin);
+        return callback(new Error('Not allowed by CORS'));
     },
-    credentials: true, // allow cookies/auth headers
+    credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 };
+
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
