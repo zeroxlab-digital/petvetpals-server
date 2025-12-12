@@ -228,7 +228,7 @@ export const addMedication = async (req, res) => {
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const { medication, dosage, frequency, remaining, start_date, end_date, is_ongoing, reason, timeOfDay, instructions, } = req.body;
+        const { medication, dosage, frequency, remaining, start_date, end_date, is_ongoing, timeOfDay, instructions, } = req.body;
 
         if (!medication || !frequency || !start_date) {
             return res.status(400).json({ message: "All fields are required!" });
@@ -244,7 +244,6 @@ export const addMedication = async (req, res) => {
             start_date,
             end_date,
             is_ongoing,
-            reason,
             instructions
         })
         console.log("new medication:", newMedication)
@@ -288,7 +287,7 @@ export const getMedications = async (req, res) => {
                 const start = new Date(med.start_date);
                 let next_due = null;
 
-                if (med.frequency.toLowerCase() === "daily") {
+                if (med.frequency.toLowerCase() === "once_daily") {
                     next_due = new Date(today);
                     next_due.setDate(today.getDate() + 1); // + 1 should be added after fixing timezone issues
                 } else if (med.frequency.toLowerCase() === "twice-daily") {

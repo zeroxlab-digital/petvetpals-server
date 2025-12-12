@@ -36,11 +36,6 @@ const medicationSchema = mongoose.Schema({
         default: true,
         required: true
     },
-    reason: {
-        type: String,
-        default: null,
-        required: false
-    },
     time_of_day: {
         type: String,
         default: null,
