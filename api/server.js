@@ -33,7 +33,7 @@ app.use(cookieParser());
 
 // List of allowed origins (full URLs)
 const allowedOrigins = [
-    'http://localhost:3000',           // local dev (adjust port as needed)
+    'http://localhost:3000',           // local dev
     'https://petvetpals.com',          // production
     'https://www.petvetpals.com',      // production with www
     'https://petvetpals.vercel.app',   // Vercel deployment
@@ -42,12 +42,12 @@ const allowedOrigins = [
 // CORS options
 const corsOptions = {
     origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, Postman, server-to-server)
+        // Allows requests with no origin (mobile apps, Postman, server-to-server)
         if (!origin) {
             return callback(null, true);
         }
 
-        // Check if origin is in allowed list
+        // Checks if origin is in allowed list
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
@@ -80,6 +80,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
+// ------CRON JOB ONLY FOR LOCALHOST-------
 // CRON job running every 1 minute to send push notifications
 cron.schedule("*/1 * * * *", async () => {
     console.log("Running reminder push task...");
@@ -92,7 +93,6 @@ cron.schedule("*/1 * * * *", async () => {
         console.error("Cron push error:", err);
     }
 });
-
 // CRON job to reset med reminders
 // Runs every 10 minute
 cron.schedule("*/10 * * * *", async () => {
@@ -147,9 +147,12 @@ app.use("/api/push", pushRouter);
 // Messenger between pet owner and vet
 app.use("/api/message", messageRouter);
 
-app.listen(PORT, () => {
-    console.log(`The server is running on port: http://localhost:${PORT}`)
-})
+const production = process.env.NODE_ENV === "production";
+if (!production) {
+    app.listen(PORT, () => {
+        console.log(`The server is running on port: http://localhost:${PORT}`)
+    })
+}
 
 export default app;
 export const handler = serverless(app);
