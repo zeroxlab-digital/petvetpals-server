@@ -35,6 +35,14 @@ const userSchema = mongoose.Schema({
         type: String,
         default: null,
     },
+    state: {
+        type: String,
+        default: null
+    },
+    membership_status: {
+        type: String,
+        default: "Basic"
+    },
     timezone: {
         type: String,
         default: "UTC",

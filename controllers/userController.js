@@ -84,9 +84,9 @@ export const getUserDetails = async (req, res) => {
 export const updateUserDetails = async (req, res) => {
     try {
         const userId = req.id;
-        const { fullName, image, gender, address, city, zip } = req.body;
+        const { fullName, image, gender, address, city, zip, state } = req.body;
         const updateUser = await User.findByIdAndUpdate({ _id: userId }, {
-            fullName, image, gender, address, city, zip,
+            fullName, image, gender, address, city, zip, state
         }, { new: true, runValidators: true }).select("-password")
         if (!updateUser) {
             return res.status(500).json({ success: false, message: "User profile could not be updated!" })
