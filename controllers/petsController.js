@@ -621,7 +621,6 @@ export const addMedicalHistory = async (req, res) => {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
         const { type, diagnosis, treatment, vetOrClinic, date, file, description, notes } = req.body;
-
         if (!type) {
             return res.status(400).json({ message: "Type is required!" });
         }
@@ -630,7 +629,7 @@ export const addMedicalHistory = async (req, res) => {
         }
         const newMedicalHistory = await MedicalHistory.create({
             pet: petId,
-            vetOrClinic,
+            vetOrClinic: vetOrClinic.fullName || vetOrClinic,
             type,
             diagnosis: diagnosis || "None required",
             treatment,
@@ -666,12 +665,11 @@ export const updateMedicalHistory = async (req, res) => {
         const { id } = req.query;
         console.log("Medical ID:", id)
         const { type, diagnosis, treatment, vetOrClinic, date, file, description, notes } = req.body;
-
         const updatedMedicalHistory = await MedicalHistory.findByIdAndUpdate({ _id: id }, {
             type,
             diagnosis,
             treatment,
-            vetOrClinic,
+            vetOrClinic: vetOrClinic.fullName || vetOrClinic,
             date,
             file,
             description,
@@ -737,7 +735,7 @@ export const addVaccination = async (req, res) => {
         const newVaccination = await Vaccination.create({
             pet: petId,
             vaccine,
-            provider,
+            provider: provider.fullName || provider,
             date_given,
             next_due,
             notes,
@@ -789,7 +787,7 @@ export const updateVaccination = async (req, res) => {
 
         const updatedVaccination = await Vaccination.findByIdAndUpdate(id, {
             vaccine,
-            provider,
+            provider: provider.fullName || provider,
             date_given,
             next_due,
             status,
