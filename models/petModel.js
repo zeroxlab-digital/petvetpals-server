@@ -19,9 +19,10 @@ const petSchema = mongoose.Schema({
         default: null,
         required: false
     },
-    age: {
-        type: Number,
-        required: true
+    date_of_birth: {
+        type: Date,
+        required: true,
+        default: null
     },
     breed: {
         type: String,

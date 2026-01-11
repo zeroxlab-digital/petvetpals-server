@@ -34,7 +34,7 @@ function extractJSONFromAI(text) {
 nutritionistRouter.post("/ask-nutritionist", async (req, res) => {
     try {
         const { pet, activityLevel, medicalConditions, currentSymptoms, treatmentGoals, knownAllergies, currentDiet } = req.body;
-
+        console.log("pet:", pet)
         if (!pet || !activityLevel || !treatmentGoals) {
             return res.status(400).json({ success: false, message: "Pet, Activity Level, and Nutrition Goals are required!" });
         }
