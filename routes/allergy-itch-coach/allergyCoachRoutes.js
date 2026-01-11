@@ -50,6 +50,7 @@ allergyCoachRouter.post("/gpt", async (req, res) => {
             knownAllergies,
             previousTreatments,
         } = req.body;
+        console.log("pet:", pet)
         if (!startDate || !affectedAreas || !severity) {
             throw new Error({ message: "Start date, affected areas and severity fields are required!" })
         }
@@ -63,7 +64,7 @@ allergyCoachRouter.post("/gpt", async (req, res) => {
         - Pet Name: ${pet.name}
         - Pet Breed: ${pet.breed}
         - Pet Gender: ${pet.gender}
-        - Pet Age: ${pet.age} years old
+        - Pet Age: ${pet.age}
         - Start Date: ${startDate}
         - Severity: ${severity}/10
         - Affected Areas: ${affectedAreas.join(", ")}
