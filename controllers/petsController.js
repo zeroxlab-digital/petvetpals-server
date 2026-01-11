@@ -141,9 +141,9 @@ export const getPetProfiles = async (req, res) => {
 export const addPetProfile = async (req, res) => {
     try {
         const user = req.id;
-        const { type, name, age, gender, weight, breed } = req.body;
-        if (!type || !name || !age || !gender) {
-            return res.status(400).json({ message: "Pet type, name, age and gender is required!" })
+        const { type, name, date_of_birth, gender, weight, breed } = req.body;
+        if (!type || !name || !date_of_birth || !gender) {
+            return res.status(400).json({ message: "Pet type, name, dob and gender is required!" })
         }
 
         let imageUrl = "";
@@ -164,7 +164,7 @@ export const addPetProfile = async (req, res) => {
         }
 
         const petProfile = await Pet.create({
-            user, type, name, age, image: imageUrl, gender, breed,
+            user, type, name, date_of_birth, image: imageUrl, gender, breed,
             weight: [
                 {
                     value: weight
@@ -181,7 +181,7 @@ export const addPetProfile = async (req, res) => {
 export const updatePetProfile = async (req, res) => {
     try {
         const { id } = req.params;
-        const { type, name, age, gender, weight, breed } = req.body;
+        const { type, name, date_of_birth, gender, weight, breed } = req.body;
 
         let imageUrl = "";
         if (req.file) {
@@ -200,7 +200,7 @@ export const updatePetProfile = async (req, res) => {
         }
 
         const updatePet = await Pet.findByIdAndUpdate(id, {
-            type, name, age, image: imageUrl, gender, breed,
+            type, name, date_of_birth, image: imageUrl, gender, breed,
             $push: {
                 weight:
                 {
