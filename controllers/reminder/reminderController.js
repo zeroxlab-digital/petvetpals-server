@@ -67,51 +67,106 @@ export const getReminders = async (req, res) => {
 
 export const resetReminders = async (req, res) => {
     try {
-        const now = moment();
-        // console.log("now:", now)
-        const reminders = await Reminder.find();
-        // console.log("reminders:", reminders);
-
+        const reminders = await Reminder.find().populate({ path: "user", select: "timezone" });
+        console.log("reminders:", reminders)
         let resetCount = 0;
+        let deletedCount = 0;
 
         for (const reminder of reminders) {
+            const userTz = reminder.user?.timezone || "UTC";
+            const currentUserTime = moment().tz(userTz);
 
-            if (reminder.end_date && moment(reminder.end_date).isBefore(now)) continue;
+            let shouldDelete = false;
 
+            // Delete one-time reminders ONLY if reminder_date is before today
+            if (reminder.frequency === "one_time" && reminder.reminder_date) {
+                const reminderDate = moment(reminder.reminder_date)
+                    .utc()
+                    .tz(userTz, true)
+                    .startOf("day");
+
+                const today = currentUserTime.clone().startOf("day");
+
+                if (reminderDate.isBefore(today)) {
+                    shouldDelete = true;
+                }
+            }
+
+            // Delete any reminder (recurring or one-time) where end_date has passed
+            if (reminder.end_date) {
+                const endDate = moment(reminder.end_date).tz(userTz).startOf('day');
+                const today = currentUserTime.clone().startOf('day');
+
+                // Only delete if end_date is BEFORE today (not including today)
+                if (endDate.isBefore(today, 'day')) {
+                    shouldDelete = true;
+                }
+            }
+
+            if (shouldDelete) {
+                await Reminder.deleteOne({ _id: reminder._id });
+                deletedCount++;
+                console.log(`🗑️ Deleted expired reminder for user ${reminder.user?._id}, id ${reminder._id}`);
+                continue; // as a result we skip to next reminder
+            }
+
+            // Reset logic for active reminders
             let reminderUpdated = false;
 
             for (let i = 0; i < (reminder.reminder_times || []).length; i++) {
                 const rt = reminder.reminder_times[i];
+
+                // Skip if already marked for reset today
+                if (rt.last_reset) {
+                    const lastResetDate = moment(rt.last_reset).tz(userTz).startOf('day');
+                    const today = currentUserTime.clone().startOf('day');
+
+                    // If already reset today, skip
+                    if (lastResetDate.isSame(today, 'day')) {
+                        continue;
+                    }
+                }
+
                 const [hour, minute] = rt.time.split(":").map(Number);
-                const reminderTimeToday = moment().set({ hour, minute, second: 0, millisecond: 0 });
-                const lastReset = moment(rt.last_reset || reminder.starting_date);
-                const diffDays = now.diff(lastReset, "days");
+                const reminderTimeToday = currentUserTime.clone().set({
+                    hour,
+                    minute,
+                    second: 0,
+                    millisecond: 0
+                });
+
+                const lastReset = rt.last_reset
+                    ? moment(rt.last_reset).tz(userTz)
+                    : moment(reminder.starting_date).tz(userTz);
+
+                const diffDays = currentUserTime.diff(lastReset, "days");
+                const diffMonths = currentUserTime.diff(lastReset, "months");
 
                 let shouldReset = false;
 
-                // console.log({
-                //     reminderId: reminder._id,
-                //     frequency: reminder.frequency,
-                //     is_given: rt.is_given,
-                //     last_reset: rt.last_reset,
-                //     shouldReset,
-                // });
+                // Only reset if the reminder time has passed today
+                const hasTimePassed = currentUserTime.isAfter(reminderTimeToday);
 
                 switch (reminder.frequency) {
                     case "daily_once":
                     case "daily_twice":
-                        shouldReset = (diffDays >= 1 || !rt.last_reset) && now.isAfter(reminderTimeToday);
+                        // Reset daily if at least 1 day has passed AND the time has passed today
+                        shouldReset = diffDays >= 1 && hasTimePassed;
                         break;
                     case "bi-weekly":
-                        shouldReset = diffDays >= 3 && now.isAfter(reminderTimeToday);
+                        // Reset every 3 days (bi-weekly = twice a week ≈ every 3-4 days)
+                        shouldReset = diffDays >= 3 && hasTimePassed;
                         break;
                     case "weekly":
-                        shouldReset = diffDays >= 7 && now.isAfter(reminderTimeToday);
+                        // Reset weekly (7 days)
+                        shouldReset = diffDays >= 7 && hasTimePassed;
                         break;
                     case "monthly":
-                        shouldReset = now.diff(lastReset, "months") >= 1 && now.isAfter(reminderTimeToday);
+                        // Reset monthly
+                        shouldReset = diffMonths >= 1 && hasTimePassed;
                         break;
                     case "one_time":
+                        // One-time reminders never reset
                         shouldReset = false;
                         break;
                     default:
@@ -120,19 +175,28 @@ export const resetReminders = async (req, res) => {
 
                 if (shouldReset) {
                     reminder.reminder_times[i].is_given = false;
-                    reminder.reminder_times[i].last_reset = now.toDate();
+                    reminder.reminder_times[i].notification_sent = false;
+                    reminder.reminder_times[i].skipped = false;
+                    reminder.reminder_times[i].last_reset = currentUserTime.toDate();
                     reminderUpdated = true;
                     resetCount++;
-                    console.log(`✅ Reset reminder for user ${reminder.user}, id ${reminder._id}`);
+                    console.log(`✅ Reset reminder for user ${reminder.user?._id}, id ${reminder._id}, time index ${i}`);
                 }
             }
 
-            if (reminderUpdated) await reminder.save();
+            if (reminderUpdated) {
+                await reminder.save();
+            }
         }
 
-        return res.status(200).json({ success: true, message: `Reset ${resetCount} reminder times.` });
+        return res.status(200).json({
+            success: true,
+            message: `Reset ${resetCount} reminder times and deleted ${deletedCount} expired reminders.`,
+            resetCount,
+            deletedCount
+        });
     } catch (error) {
-        console.error(error);
+        console.error("Reset reminders error:", error);
         res.status(500).json({
             success: false,
             message: "Reminder reset failed! Please try again later.",
@@ -147,11 +211,11 @@ export const markGivenReminder = async (req, res) => {
         const reminderId = req.query?.id || req.body?.id;
         const timeIndex = req.query?.timeIndex || req.body?.timeIndex;
         // console.log("reminderId & timeIndex::", reminderId, timeIndex);
-        if(!userId) {
-            return res.status(401).json({ success: false, message: "Unauthorized access. Please log in."});
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized access. Please log in." });
         }
-        if(!reminderId || timeIndex === undefined) {
-            return res.status(400).json({ success: false, message: "Invalid request parameters. Reminder ID and time index are required."});
+        if (!reminderId || timeIndex === undefined) {
+            return res.status(400).json({ success: false, message: "Invalid request parameters. Reminder ID and time index are required." });
         }
 
         const updatedReminder = await Reminder.findOneAndUpdate({ _id: reminderId, user: userId }, {

@@ -94,8 +94,8 @@ cron.schedule("*/1 * * * *", async () => {
     }
 });
 // CRON job to reset med reminders
-// Runs every 10 minute
-cron.schedule("*/10 * * * *", async () => {
+// Runs every 1 minute
+cron.schedule("*/1 * * * *", async () => {
     console.log(`[${new Date().toISOString()}] Running reminder reset job...`);
     try {
         await resetReminders(

@@ -55,8 +55,8 @@ const medicationSchema = mongoose.Schema({
 
 export const Medication = mongoose.model("Medication", medicationSchema);
 
-// Schedule & Reminders
-const scheduleReminderSchema = mongoose.Schema({
+// Medication Reminders Schema
+const medicationReminderSchema = mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -111,4 +111,4 @@ const scheduleReminderSchema = mongoose.Schema({
     }
 }, { timestamps: true });
 
-export const ScheduleReminder = mongoose.model("ScheduleReminder", scheduleReminderSchema);
+export const MedicationReminder = mongoose.model("MedicationReminder", medicationReminderSchema);

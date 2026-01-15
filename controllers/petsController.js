@@ -1,7 +1,7 @@
 import { Pet } from "../models/petModel.js";
 import { v2 as cloudinary } from "cloudinary";
 import connectCloudinary from "../config/cloudinary.js";
-import { Medication, ScheduleReminder } from "../models/medicationsModel.js";
+import { Medication, MedicationReminder } from "../models/medicationsModel.js";
 import { AllergyCondition, MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
 import moment from "moment-timezone";
 import { SymptomReport } from "../models/symptom-checker/SymptomReport.js";
@@ -25,7 +25,7 @@ export const getDetailedPetData = async (req, res) => {
         const recent_symptoms = await SymptomReport.find({ petId: pet._id }).sort({ createdAt: -1 }).limit(3).select("symptoms conditions");
 
         const now = new Date();
-        const next_reminder = await ScheduleReminder.aggregate([
+        const next_reminder = await MedicationReminder.aggregate([
             { $match: { pet: pet._id } },
             { $unwind: "$reminder_times" },
             // Populate pet with specific fields
@@ -384,7 +384,7 @@ export const addMedReminder = async (req, res) => {
             return res.status(400).json({ success: false, message: "Required fields are missing!" });
         }
 
-        const newScheduleReminder = await ScheduleReminder.create({
+        const newScheduleReminder = await MedicationReminder.create({
             user: userId,
             pet: petId,
             medication: medId,
@@ -419,7 +419,7 @@ export const updateMedReminder = async (req, res) => {
             return res.status(400).json({ success: false, message: "Schedule ID is required!" });
         }
 
-        const updatedScheduleReminder = await ScheduleReminder.findByIdAndUpdate(
+        const updatedScheduleReminder = await MedicationReminder.findByIdAndUpdate(
             id,
             {
                 medication: medId,
@@ -449,12 +449,12 @@ export const getMedReminders = async (req, res) => {
         if (!petId) {
             return res.status(404).json({ success: false, message: "Pet ID is required!" })
         }
-        const scheduledReminders = await ScheduleReminder.find({ pet: petId }).populate("medication").populate("pet").select("-__v");
+        const scheduledReminders = await MedicationReminder.find({ pet: petId }).populate("medication").populate("pet").select("-__v");
         const filteredReminders = scheduledReminders.filter(reminder => reminder.user || reminder.pet.user.toString() === userId);
         // Deletes any reminders that have passed their end date or is not ongoing anymore
         const today = new Date();
         const deleteReminders = filteredReminders.filter(item => item.end_date < today || item.medication.is_ongoing === false);
-        await ScheduleReminder.deleteMany({ _id: { $in: deleteReminders.map(r => r._id) } });
+        await MedicationReminder.deleteMany({ _id: { $in: deleteReminders.map(r => r._id) } });
 
         // console.log("scheduled reminders:", filteredReminders[0].reminder_times)
 
@@ -471,7 +471,7 @@ export const deleteMedReminder = async (req, res) => {
         if (!id) {
             return res.status(400).json({ success: false, message: "Scheduled Reminder ID is required!" })
         }
-        await ScheduleReminder.findOneAndDelete({ _id: id });
+        await MedicationReminder.findOneAndDelete({ _id: id });
         res.status(200).json({ success: true, message: "Scheduled reminder deleted successfully!" })
     } catch (error) {
         console.log(error);
@@ -490,7 +490,7 @@ export const markGivenMedReminder = async (req, res) => {
             return res.status(400).json({ success: false, message: "Reminder ID and time index are required." });
         }
 
-        const result = await ScheduleReminder.updateOne(
+        const result = await MedicationReminder.updateOne(
             { _id: id },
             {
                 $set: {
@@ -512,108 +512,188 @@ export const markGivenMedReminder = async (req, res) => {
 
 export const resetMedReminders = async (req, res) => {
     try {
-        const now = moment();
-        const reminders = await ScheduleReminder.find();
+        const reminders = await MedicationReminder
+            .find()
+            .populate({ path: "user", select: "timezone" });
 
         let resetCount = 0;
 
         for (const reminder of reminders) {
-            if (reminder.end_date && moment(reminder.end_date).isBefore(now)) continue;
+            const userTz = reminder.user?.timezone || "UTC";
+            const now = moment().tz(userTz);
+            const today = now.clone().startOf("day");
+
+            // Skip expired reminders
+            if (reminder.end_date) {
+                const endDate = moment(reminder.end_date).tz(userTz).startOf("day");
+                if (endDate.isBefore(today)) continue;
+            }
 
             let reminderUpdated = false;
 
             for (let i = 0; i < (reminder.reminder_times || []).length; i++) {
                 const rt = reminder.reminder_times[i];
-                const [hour, minute] = rt.time.split(':').map(Number);
-                const reminderTimeToday = moment().set({ hour, minute, second: 0, millisecond: 0 });
-                const lastReset = moment(rt.last_reset || reminder.starting_date);
 
-                let shouldReset = false;
-
-                switch (reminder.frequency) {
-                    case 'once_daily':
-                    case 'twice_daily':
-                        shouldReset = now.diff(lastReset, 'days') >= 1 && now.isAfter(reminderTimeToday);
-                        break;
-                    case 'every_other_day':
-                        shouldReset = now.diff(lastReset, 'days') >= 2 && now.isAfter(reminderTimeToday);
-                        break;
-                    case 'once_weekly':
-                        shouldReset = now.diff(lastReset, 'days') >= 7 && now.isAfter(reminderTimeToday);
-                        break;
-                    case 'twice_weekly':
-                        shouldReset = now.diff(lastReset, 'days') >= 3 && now.isAfter(reminderTimeToday);
-                        break;
-                    case 'once_monthly':
-                        shouldReset = now.diff(lastReset, 'months') >= 1 && now.isAfter(reminderTimeToday);
-                        break;
+                // Skip if already reset today
+                if (rt.last_reset) {
+                    const lastResetDay = moment(rt.last_reset).tz(userTz).startOf("day");
+                    if (lastResetDay.isSame(today)) continue;
                 }
-
-                if (shouldReset && rt.is_given) {
-                    reminder.reminder_times[i].is_given = false;
-                    reminder.reminder_times[i].last_reset = now.toDate();
-                    reminderUpdated = true;
-                    resetCount++;
-                }
-            }
-
-            if (reminderUpdated) await reminder.save();
-        }
-
-        return res.status(200).json({ success: true, message: `Reset ${resetCount} reminder times.` });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Reminder reset failed", error });
-    }
-};
-
-export const checkMedReminderNotifications = async (req, res) => {
-    try {
-        const now = moment().tz("America/Chicago"); // ✅ timezone for consistency
-        const reminders = await ScheduleReminder.find()
-            .populate({ path: "medication", select: "medication dosage remaining instructions" })
-            .populate({ path: "pet", select: "type name age gender breed" });
-
-        const dueReminders = [];
-
-        reminders.forEach(reminder => {
-            (reminder.reminder_times || []).forEach((rt, index) => {
-                if (rt.is_given || rt.skipped) return;
 
                 const [hour, minute] = rt.time.split(":").map(Number);
-
-                // Uses today's date instead of starting_date to avoid old timestamps
-                const reminderTime = moment().tz("America/Chicago").set({
+                const reminderTimeToday = today.clone().set({
                     hour,
                     minute,
                     second: 0,
                     millisecond: 0
                 });
 
-                const remindBeforeMins = parseInt(rt.remind_before || "10");
-                const diffMinutes = reminderTime.diff(now, "minutes");
+                // Only reset after the reminder time
+                if (!now.isAfter(reminderTimeToday)) continue;
 
-                if (diffMinutes <= remindBeforeMins && diffMinutes >= remindBeforeMins - 1) {
-                    dueReminders.push({
-                        reminderId: reminder._id,
-                        index,
-                        pet: reminder.pet,
-                        medication: reminder.medication || {},
-                        reminderTime: rt.time
-                    });
+                const lastReset = rt.last_reset
+                    ? moment(rt.last_reset).tz(userTz)
+                    : moment(reminder.starting_date).tz(userTz);
+
+                const diffDays = today.diff(lastReset.clone().startOf("day"), "days");
+                const diffMonths = now.diff(lastReset, "months");
+
+                let shouldReset = false;
+
+                switch (reminder.frequency) {
+                    case "once_daily":
+                    case "twice_daily":
+                        shouldReset = diffDays >= 1;
+                        break;
+
+                    case "every_other_day":
+                        shouldReset = diffDays >= 2;
+                        break;
+
+                    case "twice_weekly":
+                        shouldReset = diffDays >= 3;
+                        break;
+
+                    case "once_weekly":
+                        shouldReset = diffDays >= 7;
+                        break;
+
+                    case "once_monthly":
+                        shouldReset = diffMonths >= 1;
+                        break;
                 }
-            });
-        });
 
-        res.status(200).json({ success: true, dueReminders });
+                if (shouldReset) {
+                    reminder.reminder_times[i].is_given = false;
+                    reminder.reminder_times[i].skipped = false;
+                    reminder.reminder_times[i].last_reset = now.toDate();
+                    reminderUpdated = true;
+                    resetCount++;
+                }
+            }
+
+            if (reminderUpdated) {
+                await reminder.save();
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Reset ${resetCount} medication reminder times.`,
+            resetCount
+        });
     } catch (error) {
-        console.error("checkReminderNotifications error:", error);
-        res.status(500).json({ success: false, error: error.message });
+        console.error("Medication reminder reset error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Medication reminder reset failed",
+            error: error.message
+        });
     }
 };
 
-// Pet Health Record
-// Medical History
+export const checkMedReminderNotifications = async (req, res) => {
+    try {
+        const reminders = await MedicationReminder.find()
+            .populate({ path: "user", select: "timezone" })
+            .populate({ path: "medication", select: "medication dosage remaining instructions" })
+            .populate({ path: "pet", select: "type name age gender breed" });
+
+        const dueReminders = [];
+
+        for (const reminder of reminders) {
+            const userTz = reminder.user?.timezone || "UTC";
+            const now = moment().tz(userTz);
+            const today = now.clone().startOf("day");
+
+            // ⛔ Skip expired reminders
+            if (reminder.end_date) {
+                const endDate = moment(reminder.end_date).tz(userTz).startOf("day");
+                if (endDate.isBefore(today)) continue;
+            }
+
+            for (let index = 0; index < (reminder.reminder_times || []).length; index++) {
+                const rt = reminder.reminder_times[index];
+
+                if (rt.is_given || rt.skipped) continue;
+
+                // ⛔ Prevent duplicate notifications on same day
+                if (rt.last_notified) {
+                    const lastNotifiedDay = moment(rt.last_notified)
+                        .tz(userTz)
+                        .startOf("day");
+
+                    if (lastNotifiedDay.isSame(today)) continue;
+                }
+
+                const [hour, minute] = rt.time.split(":").map(Number);
+
+                const reminderTimeToday = today.clone().set({
+                    hour,
+                    minute,
+                    second: 0,
+                    millisecond: 0
+                });
+
+                const remindBeforeMins = parseInt(rt.remind_before || "10", 10);
+                const diffMinutes = reminderTimeToday.diff(now, "minutes");
+
+                // Fire notification inside the window (ex: 10 → 9 mins)
+                if (
+                    diffMinutes <= remindBeforeMins &&
+                    diffMinutes >= remindBeforeMins - 1
+                ) {
+                    dueReminders.push({
+                        reminderId: reminder._id,
+                        reminderTimeIndex: index,
+                        pet: reminder.pet,
+                        medication: reminder.medication || {},
+                        reminderTime: rt.time,
+                        timezone: userTz
+                    });
+
+                    // Mark notified to prevent duplicates
+                    rt.last_notified = now.toDate();
+                }
+            }
+
+            await reminder.save();
+        }
+
+        res.status(200).json({
+            success: true,
+            dueReminders
+        });
+    } catch (error) {
+        console.error("checkMedReminderNotifications error:", error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+
 export const addMedicalHistory = async (req, res) => {
     try {
         const { petId } = req.query;

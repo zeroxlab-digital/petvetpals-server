@@ -23,7 +23,7 @@ const reminderSchema = new Schema({
         required: true
     },
     reminder_date: {
-        type: Date,
+        type: String,
         required: false,
         default: null
     },
@@ -40,13 +40,14 @@ const reminderSchema = new Schema({
     reminder_times: [
         {
             time: { type: String, required: true },
-            reminde_before: {
+            remind_before: {
                 type: String,
                 enum: ['0', '5', '10', '15', '30', '60'],
                 default: '10'
             },
             last_reset: { type: Date, default: null },
             is_given: { type: Boolean, default: false },
+            notification_sent: { type: Boolean, default: false },
             skipped: { type: Boolean, default: false }
         }
     ],
