@@ -16,12 +16,19 @@ export const userRegister = async (req, res) => {
             return res.status(400).json({ message: "User already exists!" });
         }
         const dashedPassword = await bcrypt.hash(password, 10);
-        await User.create({
+        const newUser = await User.create({
             fullName,
             email,
             password: dashedPassword
         })
-        res.status(200).json({ status: "success", message: "User created successfully!" });
+        const userDetails = await User.findOne({ email: newUser.email }).select("-password");
+        const user_token = await jwt.sign({ userId: userDetails._id }, process.env.JWT_SECRET_KEY, { expiresIn: '60d' });
+        res.status(200).cookie("user_token", user_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            maxAge: 60 * 24 * 60 * 60 * 1000
+        }).json({ success: 'true', message: "User registration successfull!", userDetails })
     } catch (error) {
         console.log(error);
         res.status(400).json({ message: "Internal server error!", error });

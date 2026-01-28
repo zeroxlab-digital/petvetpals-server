@@ -17,12 +17,21 @@ export const registerVet = async (req, res) => {
             return res.status(400).json({ message: "User already exists!" })
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        await Vet.create({
+        const newVet = await Vet.create({
             fullName,
             email,
             password: hashedPassword
         })
-        res.status(200).json({ message: "User registration successfull!" })
+        const tokenData = {
+            vetId: newVet._id
+        }
+        const vet_token = await jwt.sign(tokenData, process.env.JWT_SECRET_KEY, { expiresIn: '60d' });
+        res.status(200).cookie("vet_token", vet_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            maxAge: 60 * 24 * 60 * 60 * 1000
+        }).json({ success: true, message: "Vet registration successfull!" });
     } catch (error) {
         console.log(error)
         res.status(400).json({ message: "Internal server error!", error });
@@ -120,7 +129,7 @@ export const getAppointments = async (req, res) => {
             vet: vetId,
             payment_status: true
         })
-        .populate({ path: "user", select: "fullName email gender image city" })
+            .populate({ path: "user", select: "fullName email gender image city" })
         console.log("Appointments:", appointments);
         res.status(200).json({ success: true, appointments })
     } catch (error) {
