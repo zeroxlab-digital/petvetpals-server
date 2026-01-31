@@ -81,7 +81,6 @@ allergyCoachRouter.post("/gpt", async (req, res) => {
         - **vetConsultation**: True if professional assessment is needed, especially in severe cases or if infection is likely.
         - **immediateActions**: Provide safe, actionable steps that owners can take at home (e.g., gentle cool compress, bathing with medicated shampoo), **without recommending extra medications or unsafe doses**.
         - **homeCareTips**: Include daily routines, skin care, grooming, diet, and environmental management (e.g., wiping paws, using air filters, limiting allergen exposure). Each tip must be concise and practical.
-        - **productRecommendations**: Suggest safe, commonly available products for symptom relief or allergen avoidance. Include reason for use.
         - **avoidanceList**: Based on known allergies and environmental triggers. Include actionable advice to reduce exposure.
         - **followUpSchedule**: Provide clear timeframe for monitoring and professional check-ups, prioritizing health and safety.
         - **rationale**: Include a short explanation (3–5 sentences) justifying the urgencyLevel and vetConsultation recommendations. Specifically mention:
@@ -100,9 +99,6 @@ allergyCoachRouter.post("/gpt", async (req, res) => {
         "immediateActions": [ "..." ],
         "homeCareTips": [
             { "category": "string", "icon": "emoji", "tips": ["..."] }
-        ],
-        "productRecommendations": [
-            { "name": "string", "type": "string", "price": "string", "reason": "string" }
         ],
         "avoidanceList": ["..."],
         "followUpSchedule": [

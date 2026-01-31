@@ -71,9 +71,6 @@ nutritionistRouter.post("/ask-nutritionist", async (req, res) => {
         ],
         "avoidIngredients": [                   // Ingredients that are harmful for this pet
             "Ingredient1", "Ingredient2"
-        ],
-        "brandRecommendations": [               // Optional recommended pet food brands
-            { "name": "Brand Name", "price": "$XX.XX", "rating": 4.5, "affiliate": true|false, "reason": "Reason for recommendation" }
         ]
         }
         `
