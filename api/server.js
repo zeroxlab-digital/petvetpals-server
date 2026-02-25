@@ -87,8 +87,8 @@ cron.schedule("*/1 * * * *", async () => {
     try {
         const med_reminder_sent = await sendMedPushNotificationsLogic();
         console.log(`Sent ${med_reminder_sent} med push notifications.`);
-        const reminder_sent = await sendPushNotificationsLogic();
-        console.log(`Sent ${reminder_sent} general push notifications.`);
+        // const reminder_sent = await sendPushNotificationsLogic();
+        // console.log(`Sent ${reminder_sent} general push notifications.`);
     } catch (err) {
         console.error("Cron push error:", err);
     }
@@ -98,14 +98,14 @@ cron.schedule("*/1 * * * *", async () => {
 cron.schedule("*/1 * * * *", async () => {
     console.log(`[${new Date().toISOString()}] Running reminder reset job...`);
     try {
-        await resetReminders(
-            { method: 'GET' },
-            {
-                status: (code) => ({
-                    json: (data) => console.log(`Reminders reset job response (${code}):`, data)
-                })
-            }
-        );
+        // await resetReminders(
+        //     { method: 'GET' },
+        //     {
+        //         status: (code) => ({
+        //             json: (data) => console.log(`Reminders reset job response (${code}):`, data)
+        //         })
+        //     }
+        // );
         await resetMedReminders(
             { method: 'GET' },
             {
