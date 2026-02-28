@@ -1,5 +1,5 @@
 import express from "express";
-import { addAllergyCondition, addMedicalHistory, addMedication, addMedReminder, addPetProfile, addVaccination, checkMedReminderNotifications, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteMedReminder, deleteVaccination, getAllergiesConditions, getDetailedPetData, getMedicalHistory, getMedications, getMedReminders, getPetProfiles, getVaccinations, logActivityLevel, logEnergyLevel, markGivenMedReminder, resetMedReminders, updateAllergyCondition, updateMedicalHistory, updateMedication, updateMedReminder, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
+import { addAllergyCondition, addMedicalHistory, addMedication, addMedReminder, addPetProfile, addVaccination, checkMedReminderNotifications, deleteAllergyCondition, deleteMedicalHistory, deleteMedication, deleteMedReminder, deletePetProfile, deleteVaccination, getAllergiesConditions, getDetailedPetData, getMedicalHistory, getMedications, getMedReminders, getPetProfiles, getVaccinations, logActivityLevel, logEnergyLevel, markGivenMedReminder, resetMedReminders, updateAllergyCondition, updateMedicalHistory, updateMedication, updateMedReminder, updatePetProfile, updateVaccination } from "../controllers/petsController.js";
 import userAuthenticated from "../middlewares/userAuthenticated.js";
 import upload from "../middlewares/multer.js";
 const petRouter = express.Router();
@@ -8,6 +8,7 @@ const petRouter = express.Router();
 petRouter.get("/get-pets", userAuthenticated, getPetProfiles)
 petRouter.post("/add-pet", userAuthenticated, upload.single("image"), addPetProfile);
 petRouter.patch("/update-pet/:id", userAuthenticated, upload.single("image"), updatePetProfile);
+petRouter.delete("/delete-pet/:id", userAuthenticated, deletePetProfile);
 petRouter.get("/detailed-pet-data", userAuthenticated, getDetailedPetData);
 petRouter.patch("/log-activity-level", userAuthenticated, logActivityLevel);
 petRouter.patch("/log-energy-level", userAuthenticated, logEnergyLevel);

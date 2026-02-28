@@ -221,6 +221,19 @@ export const updatePetProfile = async (req, res) => {
     }
 }
 
+export const deletePetProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = req.id;
+        if(!user) return res.status(401).json({ message: "Unauthenticated user." })
+        await Pet.findOneAndDelete({ _id: id });
+        res.status(200).json({ success: true, message: "Deleted pet profile" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error", error });
+    }
+}
+
 // Pet Medications
 export const addMedication = async (req, res) => {
     try {
