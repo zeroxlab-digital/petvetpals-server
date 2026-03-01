@@ -1,6 +1,9 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/userModel.js";
 import bcrypt from "bcrypt";
+import { OAuth2Client } from "google-auth-library";
+import { configDotenv } from "dotenv";
+configDotenv();
 
 export const userRegister = async (req, res) => {
     try {
@@ -57,6 +60,56 @@ export const userLogin = async (req, res) => {
             sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
             maxAge: 60 * 24 * 60 * 60 * 1000
         }).json({ success: 'true', message: "User login successfull!", userDetails })
+    } catch (error) {
+        console.log(error);
+        res.status(400).json({ message: "Internal server error!", error });
+    }
+}
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+export const googleAuth = async (req, res) => {
+    try {
+        const { credential } = req.body;
+        if(!credential) {
+            res.status(404).json({ message:"Credential is required"})
+        }
+
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID
+        })
+
+        const { name, email, picture, sub: googleId } = ticket.getPayload();
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            await User.create({
+                fullName: name,
+                email,
+                image: picture,
+                googleId
+            })
+        } else if (!user.googleId) {
+            user.googleId = googleId,
+            user.image = picture
+            await user.save();
+        }
+
+        const userDetails = await User.findOne({ email }).select("-password");
+
+        const user_token = await jwt.sign(
+            { userId: userDetails._id},
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: "60d" }
+        )
+
+        res.status(200).cookie("user_token", user_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            maxAge: 60 * 24 * 60 * 60 * 1000
+        }).json({ success: true, message: "Google authentication successfull!", userDetails })
     } catch (error) {
         console.log(error);
         res.status(400).json({ message: "Internal server error!", error });
