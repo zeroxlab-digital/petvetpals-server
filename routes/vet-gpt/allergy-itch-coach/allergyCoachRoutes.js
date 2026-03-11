@@ -1,7 +1,7 @@
 import express from "express";
 import { configDotenv } from "dotenv";
-import { AllergyItchReport } from "../../models/vet-gpt/AllergyItchModel.js";
-import userAuthenticated from "../../middlewares/userAuthenticated.js";
+import { AllergyItchReport } from "../../../models/vet-gpt/AllergyItchModel.js";
+import userAuthenticated from "../../../middlewares/userAuthenticated.js";
 configDotenv();
 const allergyCoachRouter = express.Router();
 

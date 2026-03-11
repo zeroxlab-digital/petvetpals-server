@@ -4,7 +4,7 @@ import connectCloudinary from "../config/cloudinary.js";
 import { Medication, MedicationReminder } from "../models/medicationsModel.js";
 import { AllergyCondition, MedicalHistory, Vaccination } from "../models/healthRecordModel.js";
 import moment from "moment-timezone";
-import { SymptomReport } from "../models/symptom-checker/SymptomReport.js";
+import { SymptomReport } from "../models/vet-gpt/SymptomReport.js";
 import { Appointment } from "../models/appointmentModel.js";
 import calculateOverallHealth from "../utils/calculateOverallHealth.js";
 connectCloudinary();

@@ -1,6 +1,6 @@
 import express from 'express';
 import { configDotenv } from 'dotenv';
-import { SymptomReport } from '../../models/symptom-checker/SymptomReport.js';
+import { SymptomReport } from '../../../models/vet-gpt/SymptomReport.js';
 configDotenv();
 
 const symptomRouter = express.Router();

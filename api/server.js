@@ -10,9 +10,9 @@ import appointmentRouter from "../routes/appointmentRouter.js";
 import petRouter from "../routes/petRouter.js";
 import messageRouter from "../routes/messenger/messeageRoute.js";
 import serverless from "serverless-http";
-import symptomRouter from "../routes/symptom-checker/symptomRoutes.js";
-import nutritionistRouter from "../routes/nutritionist/nutritionistRoutes.js";
-import allergyCoachRouter from "../routes/allergy-itch-coach/allergyCoachRoutes.js";
+import symptomRouter from "../routes/vet-gpt/symptom-checker/symptomRoutes.js";
+import nutritionistRouter from "../routes/vet-gpt/nutritionist/nutritionistRoutes.js";
+import allergyCoachRouter from "../routes/vet-gpt/allergy-itch-coach/allergyCoachRoutes.js";
 import cron from "node-cron";
 import pushRouter from "../routes/pushRouter.js";
 import { sendMedPushNotificationsLogic, sendPushNotificationsLogic } from "../controllers/pushController.js";
@@ -126,11 +126,12 @@ app.get("/", (req, res) => {
     res.send("Hello pawsome people, welcome to PetVetPals!")
 })
 
-app.use("/api/vet", vetRouter);
+// Pet Owner Routes
 app.use("/api/user", userRouter);
 app.use("/api/appointment", appointmentRouter);
 app.use("/api/pet", petRouter);
 
+// VetGPT Routes
 // Symptom router
 app.use("/api/symptoms", symptomRouter);
 // Nutritionist router
@@ -143,6 +144,9 @@ app.use("/api/reminder", reminderRouter);
 
 // Push notification router
 app.use("/api/push", pushRouter);
+
+// Veterinarian routes
+app.use("/api/vet", vetRouter);
 
 // Messenger between pet owner and vet
 app.use("/api/message", messageRouter);
