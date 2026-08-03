@@ -1,5 +1,5 @@
 declare namespace NodeJS {
-    interface ProcesEnv {
+    interface ProcessEnv {
         PORT: string;
         MONGODB_URI: string;
         CLOUDINARY_NAME: string;

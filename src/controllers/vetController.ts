@@ -1,12 +1,13 @@
+import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { Vet } from "../models/vetModel.js";
 import jwt from "jsonwebtoken";
 import { Appointment } from "../models/appointmentModel.js";
 
-export const registerVet = async (req, res) => {
+export const registerVet = async (req: Request, res: Response) => {
     try {
         const { fullName, email, password, confirmPassword } = req.body;
-        if (!fullName, !email, !password, !confirmPassword) {
+        if (!fullName || !email || !password || !confirmPassword) {
             return res.status(400).json({ message: "All fields are required!" })
         }
         if (password !== confirmPassword) {
@@ -29,7 +30,7 @@ export const registerVet = async (req, res) => {
         res.status(200).cookie("vet_token", vet_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 60 * 24 * 60 * 60 * 1000
         }).json({ success: true, message: "Vet registration successfull!" });
     } catch (error) {
@@ -38,7 +39,7 @@ export const registerVet = async (req, res) => {
     }
 }
 
-export const loginVet = async (req, res) => {
+export const loginVet = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
         const vet = await Vet.findOne({ email });
@@ -53,11 +54,11 @@ export const loginVet = async (req, res) => {
         const tokenData = {
             vetId: vet._id
         }
-        const vet_token = await jwt.sign(tokenData, process.env.JWT_SECRET_KEY, { expiresIn: '60d' });
+        const vet_token = await jwt.sign(tokenData, process.env.JWT_SECRET_KEY!, { expiresIn: '60d' });
         res.status(200).cookie("vet_token", vet_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 60 * 24 * 60 * 60 * 1000
         }).json({ success: true, message: "Vet login successfull!" });
     } catch (error) {
@@ -66,7 +67,7 @@ export const loginVet = async (req, res) => {
     }
 }
 
-export const getVetProfile = async (req, res) => {
+export const getVetProfile = async (req: Request, res: Response) => {
     try {
         const vetId = req.id;
         const vet = await Vet.findById(vetId).select("-password -__v");
@@ -77,7 +78,7 @@ export const getVetProfile = async (req, res) => {
     }
 }
 
-export const updateVetProfile = async (req, res) => {
+export const updateVetProfile = async (req: Request, res: Response) => {
     try {
         const vetId = req.id;
         const { fullName, fees, gender, image, banner, about, experience_years, experiences, degrees, specialities, works_at, languages, based_in } = req.body;;
@@ -106,12 +107,12 @@ export const updateVetProfile = async (req, res) => {
     }
 }
 
-export const vetLogout = async (req, res) => {
+export const vetLogout = async (req: Request, res: Response) => {
     try {
         res.clearCookie("vet_token", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax"
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
         });
 
         return res.json({ success: true, message: "Logout successful!" });
@@ -121,7 +122,7 @@ export const vetLogout = async (req, res) => {
     }
 };
 
-export const getAppointments = async (req, res) => {
+export const getAppointments = async (req: Request, res: Response) => {
     try {
         const vetId = req.id;
         console.log("Vet ID:", vetId)
@@ -139,7 +140,7 @@ export const getAppointments = async (req, res) => {
 }
 
 
-export const getAllVets = async (req, res) => {
+export const getAllVets = async (req: Request, res: Response) => {
     try {
         const vets = await Vet.find().select("-password -slots_booked -__v");
         res.status(200).json({ success: true, vets })
@@ -149,7 +150,7 @@ export const getAllVets = async (req, res) => {
     }
 }
 
-export const getVet = async (req, res) => {
+export const getVet = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
         const vet = await Vet.findById(id).select("-password -slots_booked -__v");
