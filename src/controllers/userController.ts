@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import { configDotenv } from "dotenv";
 import { PushSubscription } from "../models/pushSubscription.js";
-import { LoginUserDTO, RegisterUserDTO, UpdateUserDTO, UserTimeZone } from "../types/user.types.ts";
+import { LoginUserDTO, RegisterUserDTO, UpdateUserDTO, UserTimeZone } from "../types/user.types.js";
 configDotenv();
 
 const cookieOptions = {

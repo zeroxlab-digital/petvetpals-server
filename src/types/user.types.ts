@@ -1,3 +1,6 @@
+// ---------------------------------------------
+// PET OWNER DTOs
+//----------------------------------------------
 export interface LoginUserDTO {
     email: string;
     password: string
@@ -5,7 +8,7 @@ export interface LoginUserDTO {
 export interface RegisterUserDTO {
     fullName: string;
     email: string;
-    password: string;    
+    password: string;
     confirmPassword: string;
 }
 export interface UpdateUserDTO {
@@ -19,4 +22,23 @@ export interface UpdateUserDTO {
 }
 export interface UserTimeZone {
     timezone: string;
+}
+
+// ---------------------------------------------
+// VET DTOs
+//----------------------------------------------
+export interface UpdateVetDTO {
+    fullName: string;
+    fees: number;
+    gender: 'male' | 'female';
+    image?: string | null;
+    banner?: string | null;
+    about: string;
+    experience_years: number;
+    experiences?: [];
+    degrees?: [];
+    specialities?: [];
+    works_at?: string;
+    languages?: [];
+    based_in: string
 }
