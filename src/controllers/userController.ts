@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { User } from "../models/userModel.js";
 import bcrypt from "bcrypt";
@@ -6,7 +7,7 @@ import { configDotenv } from "dotenv";
 import { PushSubscription } from "../models/pushSubscription.js";
 configDotenv();
 
-export const userRegister = async (req, res) => {
+export const userRegister = async (req: Request, res: Response) => {
     try {
         const { fullName, email, password, confirmPassword } = req.body;
         if (!fullName || !email || !password) {
@@ -26,11 +27,11 @@ export const userRegister = async (req, res) => {
             password: dashedPassword
         })
         const userDetails = await User.findOne({ email: newUser.email }).select("-password");
-        const user_token = await jwt.sign({ userId: userDetails._id }, process.env.JWT_SECRET_KEY, { expiresIn: '60d' });
+        const user_token = await jwt.sign({ userId: userDetails._id }, process.env.JWT_SECRET_KEY!, { expiresIn: '60d' });
         res.status(200).cookie("user_token", user_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 60 * 24 * 60 * 60 * 1000
         }).json({ success: 'true', message: "User registration successfull!", userDetails })
     } catch (error) {
@@ -39,7 +40,7 @@ export const userRegister = async (req, res) => {
     }
 }
 
-export const userLogin = async (req, res) => {
+export const userLogin = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) {
@@ -54,11 +55,11 @@ export const userLogin = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials!" });
         }
         const userDetails = await User.findOne({ email }).select("-password");
-        const user_token = await jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '60d' });
+        const user_token = await jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY!, { expiresIn: '60d' });
         res.status(200).cookie("user_token", user_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 60 * 24 * 60 * 60 * 1000
         }).json({ success: 'true', message: "User login successfull!", userDetails })
     } catch (error) {
@@ -68,7 +69,7 @@ export const userLogin = async (req, res) => {
 }
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-export const googleAuth = async (req, res) => {
+export const googleAuth = async (req: Request, res: Response) => {
     try {
         const { credential } = req.body;
         if(!credential) {
@@ -79,8 +80,20 @@ export const googleAuth = async (req, res) => {
             idToken: credential,
             audience: process.env.GOOGLE_CLIENT_ID
         })
+        const payload = ticket.getPayload();
+        if(!payload) {
+            return res.status(400).json({ message: "Invalid token payload!" })
+        }
+        const { name, email, picture, sub: googleId } = payload as {
+            name?: string;
+            email?: string;
+            picture?: string;
+            sub?: string
+        };
 
-        const { name, email, picture, sub: googleId } = ticket.getPayload();
+        if(!email) {
+            return res.status(400).json({ message: "Google acount no email!" });
+        }
 
         let user = await User.findOne({ email });
 
@@ -101,14 +114,14 @@ export const googleAuth = async (req, res) => {
 
         const user_token = await jwt.sign(
             { userId: userDetails._id},
-            process.env.JWT_SECRET_KEY,
+            process.env.JWT_SECRET_KEY!,
             { expiresIn: "60d" }
         )
 
         res.status(200).cookie("user_token", user_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 60 * 24 * 60 * 60 * 1000
         }).json({ success: true, message: "Google authentication successfull!", userDetails })
     } catch (error) {
@@ -117,7 +130,7 @@ export const googleAuth = async (req, res) => {
     }
 }
 
-export const userLogout = async (req, res) => {
+export const userLogout = async (req: Request, res: Response) => {
     try {
         const userId = req.id; // now available via middleware
 
@@ -131,7 +144,7 @@ export const userLogout = async (req, res) => {
         res.clearCookie("user_token", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         });
 
         return res.json({ success: true, message: "Logout successful!" });
@@ -141,7 +154,7 @@ export const userLogout = async (req, res) => {
     }
 };
 
-export const getUserDetails = async (req, res) => {
+export const getUserDetails = async (req: Request, res: Response) => {
     try {
         const userId = req.id;
         const user = await User.findOne({ _id: userId }).select("-password -__v");
@@ -152,7 +165,7 @@ export const getUserDetails = async (req, res) => {
     }
 }
 
-export const updateUserDetails = async (req, res) => {
+export const updateUserDetails = async (req: Request, res: Response) => {
     try {
         const userId = req.id;
         const { fullName, image, gender, address, city, zip, state } = req.body;
@@ -169,7 +182,7 @@ export const updateUserDetails = async (req, res) => {
     }
 }
 
-export const updateUserTimezone = async (req, res) => {
+export const updateUserTimezone = async (req: Request, res: Response) => {
     try {
         const userId = req.id;
         if (!userId) {
