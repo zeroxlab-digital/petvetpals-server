@@ -17,7 +17,9 @@
 
     "forceConsistentCasingInFileNames": true,
 
-    "allowJs": true
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
   },
 
   "include": [
