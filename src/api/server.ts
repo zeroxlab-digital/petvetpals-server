@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import connectDB from "../config/mongodb.js";
 import { configDotenv } from "dotenv";
@@ -22,7 +22,7 @@ import { resetReminders } from "../controllers/reminder/reminderController.js";
 configDotenv();
 
 // server config
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT;
 connectDB();
 connectCloudinary();
@@ -40,8 +40,8 @@ const allowedOrigins = [
 ];
 
 // CORS options
-const corsOptions = {
-    origin: (origin, callback) => {
+const corsOptions: cors.CorsOptions = {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
         // Allows requests with no origin (mobile apps, Postman, server-to-server)
         if (!origin) {
             return callback(null, true);
@@ -109,8 +109,8 @@ cron.schedule("*/1 * * * *", async () => {
         await resetMedReminders(
             { method: 'GET' },
             {
-                status: (code) => ({
-                    json: (data) => console.log(`Med reminders reset job response (${code}):`, data)
+                status: (code: number) => ({
+                    json: (data: unknown) => console.log(`Med reminders reset job response (${code}):`, data)
                 })
             }
         );
@@ -122,7 +122,7 @@ cron.schedule("*/1 * * * *", async () => {
 
 
 // ROUTES
-app.get("/", (req, res) => {
+app.get("/", (req: Request, res: Response) => {
     res.send("Hello pawsome people, welcome to PetVetPals!")
 })
 
