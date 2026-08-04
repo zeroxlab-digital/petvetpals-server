@@ -7,9 +7,11 @@ import moment from "moment-timezone";
 import { SymptomReport } from "../models/vet-gpt/SymptomReport.js";
 import { Appointment } from "../models/appointmentModel.js";
 import calculateOverallHealth from "../utils/calculateOverallHealth.js";
+import { NextFunction, Request, Response } from "express";
+import { IMedication, IMedicationReminder } from "../types/medication.types.js";
 connectCloudinary();
 
-export const getDetailedPetData = async (req, res) => {
+export const getDetailedPetData = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.id;
         const { id } = req.query;
@@ -121,24 +123,22 @@ export const getDetailedPetData = async (req, res) => {
             .sort({ date: 1 });
 
         res.status(200).json({ upcoming_vaccination, recent_symptoms, confirmed_appointment, pending_appointments, next_reminder, overall_health });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ succcess: false, message: "Inernal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
-export const getPetProfiles = async (req, res) => {
+export const getPetProfiles = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.id;
         const pets = await Pet.find({ user: userId }).select("-__v");
         res.status(200).json({ success: true, pets });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
-export const addPetProfile = async (req, res) => {
+export const addPetProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = req.id;
         const { type, name, date_of_birth, gender, weight, breed } = req.body;
@@ -146,16 +146,21 @@ export const addPetProfile = async (req, res) => {
             return res.status(400).json({ message: "Pet type, name, dob and gender is required!" })
         }
 
-        let imageUrl = "";
+        let imageUrl: string = "";
         // Checks if an image was uploaded
         if (req.file) {
             // Upload to Cloudinary
-            const result = await new Promise((resolve, reject) => {
+            const result = await new Promise<string>((resolve, reject) => {
                 cloudinary.uploader.upload_stream(
                     { folder: "pet_profiles", format: "jpg" },
                     (error, uploadedFile) => {
-                        if (error) reject(error);
-                        else resolve(uploadedFile.secure_url);
+                        if (error) {
+                            reject(error);
+                        } else if (!uploadedFile) {
+                            reject(new Error("Cloudinary upload failed"));
+                        } else {
+                            resolve(uploadedFile.secure_url);
+                        }
                     }
                 ).end(req.file.buffer);
             });
@@ -172,26 +177,30 @@ export const addPetProfile = async (req, res) => {
             ]
         })
         res.status(200).json({ success: true, message: "New pet profile added!", petProfile })
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
-export const updatePetProfile = async (req, res) => {
+export const updatePetProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
         const { type, name, date_of_birth, gender, weight, breed } = req.body;
 
-        let imageUrl = "";
+        let imageUrl: string = "";
         if (req.file) {
             // If a file was included while requesting api then upload to Cloudinary
-            const result = await new Promise((resolve, reject) => {
+            const result = await new Promise<string>((resolve, reject) => {
                 cloudinary.uploader.upload_stream(
                     { folder: "pet_profiles", format: "jpg" },
                     (error, uploadedFile) => {
-                        if (error) reject(error)
-                        else resolve(uploadedFile.secure_url);
+                        if (error) {
+                            reject(error);
+                        } else if (!uploadedFile) {
+                            reject(new Error("Cloudinary upload failed"));
+                        } else {
+                            resolve(uploadedFile.secure_url);
+                        }
                     }
                 ).end(req.file.buffer)
             });
@@ -215,27 +224,25 @@ export const updatePetProfile = async (req, res) => {
             return res.status(400).json({ success: false, message: "Updating vet failed!" })
         }
         res.status(200).json({ success: true, message: "Vet was updated successfully!" })
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
-export const deletePetProfile = async (req, res) => {
+export const deletePetProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
         const user = req.id;
-        if(!user) return res.status(401).json({ message: "Unauthenticated user." })
+        if (!user) return res.status(401).json({ message: "Unauthenticated user." })
         await Pet.findOneAndDelete({ _id: id });
         res.status(200).json({ success: true, message: "Deleted pet profile" });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
 // Pet Medications
-export const addMedication = async (req, res) => {
+export const addMedication = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
@@ -261,13 +268,12 @@ export const addMedication = async (req, res) => {
         })
         console.log("new medication:", newMedication)
         res.status(201).json({ success: true, message: "Medication added successfully!", newMedication });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
-export const getMedications = async (req, res) => {
+export const getMedications = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         const userId = req.id;
@@ -285,17 +291,17 @@ export const getMedications = async (req, res) => {
         // Update ongoing status if end_date passed
         const today = new Date();
         const updateMedicationsStatus = medications.filter(
-            med => med.end_date && med.end_date < today && med.is_ongoing
+            (med: IMedication) => med.end_date && med.end_date < today && med.is_ongoing
         );
         if (updateMedicationsStatus.length) {
             await Medication.updateMany(
-                { _id: { $in: updateMedicationsStatus.map(med => med._id) } },
+                { _id: { $in: updateMedicationsStatus.map((med: IMedication) => med._id) } },
                 { is_ongoing: false }
             );
         }
 
         // Calculate next_due dynamically
-        medications = medications.map(med => {
+        medications = medications.map((med: IMedication) => {
             if (med.is_ongoing) {
                 const start = new Date(med.start_date);
                 let next_due = null;
@@ -332,13 +338,12 @@ export const getMedications = async (req, res) => {
         // console.log("Medication reminders:", filteredReminders);
 
         res.status(200).json({ success: true, medications });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 };
 
-export const deleteMedication = async (req, res) => {
+export const deleteMedication = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         if (!id) {
@@ -349,13 +354,12 @@ export const deleteMedication = async (req, res) => {
             return res.status(400).json({ success: false, message: "Medication could not be deleted!" });
         }
         res.status(200).json({ success: true, message: "Medication deleted successfully!" });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
-export const updateMedication = async (req, res) => {
+export const updateMedication = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         const { medication, dosage, frequency, end_date } = req.body;
@@ -373,13 +377,12 @@ export const updateMedication = async (req, res) => {
             return res.status(400).json({ success: false, message: "Updating medication failed!" });
         }
         res.status(200).json({ success: true, message: "Medication updated successfully!" });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 // Medication Reminder
-export const addMedReminder = async (req, res) => {
+export const addMedReminder = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.id;
         const { petId } = req.query;
@@ -415,7 +418,7 @@ export const addMedReminder = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error });
     }
 };
-export const updateMedReminder = async (req, res) => {
+export const updateMedReminder = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         const {
@@ -452,7 +455,7 @@ export const updateMedReminder = async (req, res) => {
         res.status(500).json({ message: "Internal server error", error });
     }
 };
-export const getMedReminders = async (req, res) => {
+export const getMedReminders = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.id;
         const { petId } = req.query;
@@ -463,22 +466,22 @@ export const getMedReminders = async (req, res) => {
             return res.status(404).json({ success: false, message: "Pet ID is required!" })
         }
         const scheduledReminders = await MedicationReminder.find({ pet: petId }).populate("medication").populate("pet").select("-__v");
-        const filteredReminders = scheduledReminders.filter(reminder => reminder.user || reminder.pet.user.toString() === userId);
+        // const filteredReminders = scheduledReminders.filter((reminder: IMedicationReminder) => reminder.user || reminder.pet.user.toString() === userId);
+        const filteredReminders = scheduledReminders.filter((reminder: IMedicationReminder) => reminder.user.toString() === userId);
         // Deletes any reminders that have passed their end date or is not ongoing anymore
         const today = new Date();
-        const deleteReminders = filteredReminders.filter(item => item.end_date < today || item.medication.is_ongoing === false);
-        await MedicationReminder.deleteMany({ _id: { $in: deleteReminders.map(r => r._id) } });
+        const deleteReminders = filteredReminders.filter((item: IMedicationReminder) => (item.end_date != null && item.end_date < today) || item.medication.is_ongoing === false);
+        await MedicationReminder.deleteMany({ _id: { $in: deleteReminders.map((r: IMedicationReminder) => r._id) } });
 
         // console.log("scheduled reminders:", filteredReminders[0].reminder_times)
 
         res.status(200).json({ success: true, scheduledReminders: filteredReminders });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
-export const deleteMedReminder = async (req, res) => {
+export const deleteMedReminder = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         if (!id) {
@@ -486,12 +489,11 @@ export const deleteMedReminder = async (req, res) => {
         }
         await MedicationReminder.findOneAndDelete({ _id: id });
         res.status(200).json({ success: true, message: "Scheduled reminder deleted successfully!" })
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
-export const markGivenMedReminder = async (req, res) => {
+export const markGivenMedReminder = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.id;
         const id = req.body?.id || req.query?.id;
@@ -517,13 +519,12 @@ export const markGivenMedReminder = async (req, res) => {
             return res.status(404).json({ success: false, message: "Reminder not found or not yours." });
 
         res.status(200).json({ success: true, message: "Reminder marked as given." });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 };
 
-export const resetMedReminders = async (req, res) => {
+export const resetMedReminders = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const reminders = await MedicationReminder
             .find()
@@ -615,17 +616,12 @@ export const resetMedReminders = async (req, res) => {
             message: `Reset ${resetCount} medication reminder times.`,
             resetCount
         });
-    } catch (error) {
-        console.error("Medication reminder reset error:", error);
-        res.status(500).json({
-            success: false,
-            message: "Medication reminder reset failed",
-            error: error.message
-        });
+    } catch (error: unknown) {
+        next(error);
     }
 };
 
-export const checkMedReminderNotifications = async (req, res) => {
+export const checkMedReminderNotifications = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const reminders = await MedicationReminder.find()
             .populate({ path: "user", select: "timezone" })
@@ -697,17 +693,13 @@ export const checkMedReminderNotifications = async (req, res) => {
             success: true,
             dueReminders
         });
-    } catch (error) {
-        console.error("checkMedReminderNotifications error:", error);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+    } catch (error: unknown) {
+        next(error)
     }
 };
 
 
-export const addMedicalHistory = async (req, res) => {
+export const addMedicalHistory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
@@ -733,12 +725,11 @@ export const addMedicalHistory = async (req, res) => {
         });
         console.log("Added new medical record:", newMedicalHistory)
         res.status(200).json({ success: true, message: "Health record added successfully!" });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
-export const getMedicalHistory = async (req, res) => {
+export const getMedicalHistory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
@@ -748,12 +739,11 @@ export const getMedicalHistory = async (req, res) => {
             .populate("pet", "name type age")
             .select("-__v");
         res.status(200).json({ success: true, medicalHistory });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
-export const updateMedicalHistory = async (req, res) => {
+export const updateMedicalHistory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         console.log("Medical ID:", id)
@@ -776,12 +766,11 @@ export const updateMedicalHistory = async (req, res) => {
             return res.status(400).json({ success: false, message: "Updating medical history failed!" });
         }
         res.status(200).json({ success: true, message: "Medical history updated successfully!" });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
-export const deleteMedicalHistory = async (req, res) => {
+export const deleteMedicalHistory = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         if (!id) {
@@ -792,14 +781,13 @@ export const deleteMedicalHistory = async (req, res) => {
             return res.status(400).json({ success: false, message: "Medical history could not be deleted!" });
         }
         res.status(200).json({ success: true, message: "Medical history deleted successfully!" });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
 // Vaccinations
-export const addVaccination = async (req, res) => {
+export const addVaccination = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
@@ -836,12 +824,11 @@ export const addVaccination = async (req, res) => {
         });
         console.log("new vaccination:", newVaccination)
         res.status(201).json({ success: true, message: "Vaccination added successfully!", newVaccination });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
-export const getVaccinations = async (req, res) => {
+export const getVaccinations = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
@@ -852,12 +839,11 @@ export const getVaccinations = async (req, res) => {
             .populate("pet", "name type age")
             .select("-__v");
         res.status(200).json({ success: true, vaccinations });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
-export const deleteVaccination = async (req, res) => {
+export const deleteVaccination = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         if (!id) {
@@ -868,12 +854,11 @@ export const deleteVaccination = async (req, res) => {
             return res.status(400).json({ success: false, message: "Vaccination could not be deleted!" });
         }
         res.status(200).json({ success: true, message: "Vaccination deleted successfully!" });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
-export const updateVaccination = async (req, res) => {
+export const updateVaccination = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         const { vaccine, provider, date_given, next_due, status, notes } = req.body;
@@ -893,14 +878,13 @@ export const updateVaccination = async (req, res) => {
             return res.status(400).json({ success: false, message: "Updating vaccination failed!" });
         }
         res.status(200).json({ success: true, message: "Vaccination updated successfully!" });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
 // Allergy Conditions
-export const addAllergyCondition = async (req, res) => {
+export const addAllergyCondition = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
@@ -919,12 +903,11 @@ export const addAllergyCondition = async (req, res) => {
             description
         });
         res.status(201).json({ success: true, message: "Allergy/condition added successfully!", newAllergyCondition });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
-export const getAllergiesConditions = async (req, res) => {
+export const getAllergiesConditions = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
@@ -934,12 +917,11 @@ export const getAllergiesConditions = async (req, res) => {
             .populate("pet", "name type age")
             .select("-__v");
         res.status(200).json({ success: true, allergiesConditions });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
-export const deleteAllergyCondition = async (req, res) => {
+export const deleteAllergyCondition = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         if (!id) {
@@ -950,12 +932,11 @@ export const deleteAllergyCondition = async (req, res) => {
             return res.status(400).json({ success: false, message: "Allergy condition could not be deleted!" });
         }
         res.status(200).json({ success: true, message: "Allergy condition deleted successfully!" });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
-export const updateAllergyCondition = async (req, res) => {
+export const updateAllergyCondition = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         const { type, name, severity, diagnosedDate, description } = req.body;
@@ -974,16 +955,15 @@ export const updateAllergyCondition = async (req, res) => {
             return res.status(400).json({ success: false, message: "Updating allergy condition failed!" });
         }
         res.status(200).json({ success: true, message: "Allergy condition updated successfully!" });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
 
 // ---------- Pet Health Insights - Overall Health, Activity Level, Energy Level etc. ----------- //
 
-export const logActivityLevel = async (req, res) => {
+export const logActivityLevel = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         const { activity_level } = req.body;
@@ -1003,7 +983,7 @@ export const logActivityLevel = async (req, res) => {
     }
 }
 
-export const logEnergyLevel = async (req, res) => {
+export const logEnergyLevel = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         const { energy_level } = req.body;
