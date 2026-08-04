@@ -8,7 +8,8 @@ import { SymptomReport } from "../models/vet-gpt/SymptomReport.js";
 import { Appointment } from "../models/appointmentModel.js";
 import calculateOverallHealth from "../utils/calculateOverallHealth.js";
 import { NextFunction, Request, Response } from "express";
-import { IMedication, IMedicationReminder } from "../types/medication.types.js";
+import { AddMedicationDTO, AddMedicationReminderDTO, IMedication, IMedicationReminder, UpdateMedicationDTO } from "../types/medication.types.js";
+import { AddVaccinationDTO, AllergyDTO, MedicalHistoryDTO, PetProfileDTO, UpdateVaccinationDTO } from "../types/pet.types.js";
 connectCloudinary();
 
 export const getDetailedPetData = async (req: Request, res: Response, next: NextFunction) => {
@@ -138,7 +139,7 @@ export const getPetProfiles = async (req: Request, res: Response, next: NextFunc
     }
 }
 
-export const addPetProfile = async (req: Request, res: Response, next: NextFunction) => {
+export const addPetProfile = async (req: Request<{}, {}, PetProfileDTO>, res: Response, next: NextFunction) => {
     try {
         const user = req.id;
         const { type, name, date_of_birth, gender, weight, breed } = req.body;
@@ -182,7 +183,7 @@ export const addPetProfile = async (req: Request, res: Response, next: NextFunct
     }
 }
 
-export const updatePetProfile = async (req: Request, res: Response, next: NextFunction) => {
+export const updatePetProfile = async (req: Request<{ id: string }, {}, PetProfileDTO>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
         const { type, name, date_of_birth, gender, weight, breed } = req.body;
@@ -229,7 +230,7 @@ export const updatePetProfile = async (req: Request, res: Response, next: NextFu
     }
 }
 
-export const deletePetProfile = async (req: Request, res: Response, next: NextFunction) => {
+export const deletePetProfile = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
         const user = req.id;
@@ -242,13 +243,13 @@ export const deletePetProfile = async (req: Request, res: Response, next: NextFu
 }
 
 // Pet Medications
-export const addMedication = async (req: Request, res: Response, next: NextFunction) => {
+export const addMedication = async (req: Request<{}, {}, AddMedicationDTO>, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
             return res.status(400).json({ message: "Pet ID is required!" });
         }
-        const { medication, dosage, frequency, remaining, start_date, end_date, is_ongoing, timeOfDay, instructions, } = req.body;
+        const { medication, dosage, frequency, remaining, start_date, end_date, is_ongoing, time_of_day, instructions, } = req.body;
 
         if (!medication || !frequency || !start_date) {
             return res.status(400).json({ message: "All fields are required!" });
@@ -259,7 +260,7 @@ export const addMedication = async (req: Request, res: Response, next: NextFunct
             medication,
             dosage,
             frequency,
-            time_of_day: timeOfDay,
+            time_of_day,
             remaining,
             start_date,
             end_date,
@@ -359,7 +360,7 @@ export const deleteMedication = async (req: Request, res: Response, next: NextFu
     }
 }
 
-export const updateMedication = async (req: Request, res: Response, next: NextFunction) => {
+export const updateMedication = async (req: Request<{}, {}, UpdateMedicationDTO>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         const { medication, dosage, frequency, end_date } = req.body;
@@ -382,7 +383,7 @@ export const updateMedication = async (req: Request, res: Response, next: NextFu
     }
 }
 // Medication Reminder
-export const addMedReminder = async (req: Request, res: Response, next: NextFunction) => {
+export const addMedReminder = async (req: Request<{}, {}, AddMedicationReminderDTO>, res: Response, next: NextFunction) => {
     try {
         const userId = req.id;
         const { petId } = req.query;
@@ -418,7 +419,7 @@ export const addMedReminder = async (req: Request, res: Response, next: NextFunc
         res.status(500).json({ message: "Internal server error", error });
     }
 };
-export const updateMedReminder = async (req: Request, res: Response, next: NextFunction) => {
+export const updateMedReminder = async (req: Request<{}, {}, AddMedicationReminderDTO>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         const {
@@ -699,7 +700,7 @@ export const checkMedReminderNotifications = async (req: Request, res: Response,
 };
 
 
-export const addMedicalHistory = async (req: Request, res: Response, next: NextFunction) => {
+export const addMedicalHistory = async (req: Request<{}, {}, MedicalHistoryDTO>, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
@@ -714,7 +715,7 @@ export const addMedicalHistory = async (req: Request, res: Response, next: NextF
         }
         const newMedicalHistory = await MedicalHistory.create({
             pet: petId,
-            vetOrClinic: vetOrClinic.fullName || vetOrClinic,
+            vetOrClinic: vetOrClinic,
             type,
             diagnosis: diagnosis || "None required",
             treatment,
@@ -743,7 +744,7 @@ export const getMedicalHistory = async (req: Request, res: Response, next: NextF
         next(error)
     }
 }
-export const updateMedicalHistory = async (req: Request, res: Response, next: NextFunction) => {
+export const updateMedicalHistory = async (req: Request<{}, {}, MedicalHistoryDTO>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         console.log("Medical ID:", id)
@@ -752,7 +753,7 @@ export const updateMedicalHistory = async (req: Request, res: Response, next: Ne
             type,
             diagnosis,
             treatment,
-            vetOrClinic: vetOrClinic.fullName || vetOrClinic,
+            vetOrClinic: vetOrClinic,
             date,
             file,
             description,
@@ -787,7 +788,7 @@ export const deleteMedicalHistory = async (req: Request, res: Response, next: Ne
 }
 
 // Vaccinations
-export const addVaccination = async (req: Request, res: Response, next: NextFunction) => {
+export const addVaccination = async (req: Request<{}, {}, AddVaccinationDTO>, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
@@ -800,23 +801,23 @@ export const addVaccination = async (req: Request, res: Response, next: NextFunc
 
         const today = new Date();
 
-        let vaccination_status;
+        let vaccination_status: string;
+        const nextDueDate = next_due ? new Date(next_due) : null;
 
-        switch (true) {
-            case new Date(next_due) > today:
-                vaccination_status = "up-to-date";
-                break;
-            case new Date(next_due) < today:
-                vaccination_status = "overdue";
-                break;
-            default:
-                vaccination_status = "due";
+        if (!nextDueDate) {
+            vaccination_status = "due";
+        } else if (nextDueDate > today) {
+            vaccination_status = "up-to-date";
+        } else if (nextDueDate < today) {
+            vaccination_status = "overdue";
+        } else {
+            vaccination_status = "due";
         }
 
         const newVaccination = await Vaccination.create({
             pet: petId,
             vaccine,
-            provider: provider.fullName || provider,
+            provider: provider,
             date_given,
             next_due,
             notes,
@@ -858,14 +859,14 @@ export const deleteVaccination = async (req: Request, res: Response, next: NextF
         next(error)
     }
 }
-export const updateVaccination = async (req: Request, res: Response, next: NextFunction) => {
+export const updateVaccination = async (req: Request<{}, {}, UpdateVaccinationDTO>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         const { vaccine, provider, date_given, next_due, status, notes } = req.body;
 
         const updatedVaccination = await Vaccination.findByIdAndUpdate(id, {
             vaccine,
-            provider: provider.fullName || provider,
+            provider: provider,
             date_given,
             next_due,
             status,
@@ -884,7 +885,7 @@ export const updateVaccination = async (req: Request, res: Response, next: NextF
 }
 
 // Allergy Conditions
-export const addAllergyCondition = async (req: Request, res: Response, next: NextFunction) => {
+export const addAllergyCondition = async (req: Request<{}, {}, AllergyDTO>, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.query;
         if (!petId) {
@@ -936,7 +937,7 @@ export const deleteAllergyCondition = async (req: Request, res: Response, next: 
         next(error)
     }
 }
-export const updateAllergyCondition = async (req: Request, res: Response, next: NextFunction) => {
+export const updateAllergyCondition = async (req: Request<{}, {}, AllergyDTO>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.query;
         const { type, name, severity, diagnosedDate, description } = req.body;
