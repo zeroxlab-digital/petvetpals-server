@@ -1,7 +1,9 @@
+import { Request, Response } from "express";
 import { Appointment } from "../models/appointmentModel.js";
 import { Vet } from "../models/vetModel.js";
+import { BookAppointmentDTO, SlotBookDTO, UpdateAppointmentDTO } from "../types/appointment.types.js";
 
-export const bookAppointment = async (req, res) => {
+export const bookAppointment = async (req: Request<{ id: string }, {}, BookAppointmentDTO>, res: Response) => {
     try {
         const userId = req.id;
         const vetId = req.params.id;
@@ -12,7 +14,7 @@ export const bookAppointment = async (req, res) => {
         const requestedDate = new Date(date);
 
         // Check if the date is already booked
-        const availability = vet.slots_booked.filter(item => {
+        const availability = vet.slots_booked.filter((item: SlotBookDTO) => {
             const bookedDate = new Date(item.date);
             return bookedDate.getTime() === requestedDate.getTime();
         });
@@ -42,37 +44,53 @@ export const bookAppointment = async (req, res) => {
     }
 };
 
-export const updateAppointment = async (req, res) => {
+export const updateAppointment = async (req: Request<{ id: string }, {}, UpdateAppointmentDTO>, res: Response) => {
     try {
         const { id } = req.params;
         const { pet, purpose, payment_status, status, date } = req.body;
         const updateAppt = await Appointment.findByIdAndUpdate({ _id: id }, {
             pet, purpose, payment_status, status, date
         }, { new: true, runValidators: true });
-        if(!updateAppt) {
+        if (!updateAppt) {
             return res.status(400).json({ success: false, message: "Could not update the appointment!" });
         }
         res.status(200).json({ success: true, message: "Appointment updated successfully!", updateAppt });
-    } catch (error) {
-        console.log(error.message);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            console.error(error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error",
+                error: error.message,
+            });
+        }
+
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
-export const viewAppointments = async (req, res) => {
+export const viewAppointments = async (req: Request, res: Response) => {
     try {
         const userId = req.id;
         const appointments = await Appointment.find({
             user: userId,
         }).populate({ path: 'vet', select: "-password -slots_booked" });
         res.status(200).json({ success: true, appointments })
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ message: "Internal server error!", error })
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            console.error(error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error",
+                error: error.message,
+            });
+        }
+
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
 
-export const deleteAppointment = async (req, res) => {
+export const deleteAppointment = async (req: Request<{ id: string }>, res: Response) => {
     try {
         const { id } = req.params;
         const deleteAppt = await Appointment.findOneAndDelete({ _id: id });
@@ -80,8 +98,16 @@ export const deleteAppointment = async (req, res) => {
             return res.status(400).json({ success: false, message: "Appointment could not be deleted!" })
         }
         res.status(200).json({ success: true, message: "Appointment deleted successfully!" })
-    } catch (error) {
-        console.log("Error deleting appointment!", error)
-        res.status(500).json({ message: "Internal server error!", error })
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            console.error(error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error",
+                error: error.message,
+            });
+        }
+
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 }
