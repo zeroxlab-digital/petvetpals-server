@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { Appointment } from "../models/appointmentModel.js";
 import { Vet } from "../models/vetModel.js";
 import { BookAppointmentDTO, SlotBookDTO, UpdateAppointmentDTO } from "../types/appointment.types.js";
 
-export const bookAppointment = async (req: Request<{ id: string }, {}, BookAppointmentDTO>, res: Response) => {
+export const bookAppointment = async (req: Request<{ id: string }, {}, BookAppointmentDTO>, res: Response, next: NextFunction) => {
     try {
         const userId = req.id;
         const vetId = req.params.id;
@@ -38,13 +38,12 @@ export const bookAppointment = async (req: Request<{ id: string }, {}, BookAppoi
         await vet.save();
 
         res.status(200).json({ message: "New Appointment booked", newAppointment });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal server error", error });
+    } catch (error: unknown) {
+        next(error)
     }
 };
 
-export const updateAppointment = async (req: Request<{ id: string }, {}, UpdateAppointmentDTO>, res: Response) => {
+export const updateAppointment = async (req: Request<{ id: string }, {}, UpdateAppointmentDTO>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
         const { pet, purpose, payment_status, status, date } = req.body;
@@ -56,20 +55,11 @@ export const updateAppointment = async (req: Request<{ id: string }, {}, UpdateA
         }
         res.status(200).json({ success: true, message: "Appointment updated successfully!", updateAppt });
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            console.error(error);
-            return res.status(500).json({
-                success: false,
-                message: "Internal server error",
-                error: error.message,
-            });
-        }
-
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        next(error)
     }
 }
 
-export const viewAppointments = async (req: Request, res: Response) => {
+export const viewAppointments = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.id;
         const appointments = await Appointment.find({
@@ -77,20 +67,11 @@ export const viewAppointments = async (req: Request, res: Response) => {
         }).populate({ path: 'vet', select: "-password -slots_booked" });
         res.status(200).json({ success: true, appointments })
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            console.error(error);
-            return res.status(500).json({
-                success: false,
-                message: "Internal server error",
-                error: error.message,
-            });
-        }
-
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        next(error)
     }
 }
 
-export const deleteAppointment = async (req: Request<{ id: string }>, res: Response) => {
+export const deleteAppointment = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params;
         const deleteAppt = await Appointment.findOneAndDelete({ _id: id });
@@ -99,15 +80,6 @@ export const deleteAppointment = async (req: Request<{ id: string }>, res: Respo
         }
         res.status(200).json({ success: true, message: "Appointment deleted successfully!" })
     } catch (error: unknown) {
-        if (error instanceof Error) {
-            console.error(error);
-            return res.status(500).json({
-                success: false,
-                message: "Internal server error",
-                error: error.message,
-            });
-        }
-
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        next(error)
     }
 }
