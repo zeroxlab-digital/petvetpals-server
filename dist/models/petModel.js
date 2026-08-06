@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 const petSchema = mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -58,5 +57,5 @@ const petSchema = mongoose.Schema({
         min: 0,
         max: 100
     }
-}, { timestamps: true })
+}, { timestamps: true });
 export const Pet = mongoose.model("Pet", petSchema);

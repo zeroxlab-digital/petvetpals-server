@@ -1,12 +1,21 @@
+import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { User } from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import { configDotenv } from "dotenv";
 import { PushSubscription } from "../models/pushSubscription.js";
+import { LoginUserDTO, RegisterUserDTO, UpdateUserDTO, UserTimeZone } from "../types/user.types.js";
 configDotenv();
 
-export const userRegister = async (req, res) => {
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 60 * 24 * 60 * 60 * 1000
+} as const;
+
+export const userRegister = async (req: Request<{}, {}, RegisterUserDTO>, res: Response) => {
     try {
         const { fullName, email, password, confirmPassword } = req.body;
         if (!fullName || !email || !password) {
@@ -26,20 +35,15 @@ export const userRegister = async (req, res) => {
             password: dashedPassword
         })
         const userDetails = await User.findOne({ email: newUser.email }).select("-password");
-        const user_token = await jwt.sign({ userId: userDetails._id }, process.env.JWT_SECRET_KEY, { expiresIn: '60d' });
-        res.status(200).cookie("user_token", user_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-            maxAge: 60 * 24 * 60 * 60 * 1000
-        }).json({ success: 'true', message: "User registration successfull!", userDetails })
+        const user_token = jwt.sign({ userId: userDetails._id }, process.env.JWT_SECRET_KEY!, { expiresIn: '60d' });
+        res.status(200).cookie("user_token", user_token, cookieOptions).json({ success: true, message: "User registration successfull!", userDetails })
     } catch (error) {
         console.log(error);
         res.status(400).json({ message: "Internal server error!", error });
     }
 }
 
-export const userLogin = async (req, res) => {
+export const userLogin = async (req: Request<{}, {}, LoginUserDTO>, res: Response) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) {
@@ -54,13 +58,8 @@ export const userLogin = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials!" });
         }
         const userDetails = await User.findOne({ email }).select("-password");
-        const user_token = await jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '60d' });
-        res.status(200).cookie("user_token", user_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-            maxAge: 60 * 24 * 60 * 60 * 1000
-        }).json({ success: 'true', message: "User login successfull!", userDetails })
+        const user_token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY!, { expiresIn: '60d' });
+        res.status(200).cookie("user_token", user_token, cookieOptions).json({ success: true, message: "User login successfull!", userDetails })
     } catch (error) {
         console.log(error);
         res.status(400).json({ message: "Internal server error!", error });
@@ -68,19 +67,31 @@ export const userLogin = async (req, res) => {
 }
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-export const googleAuth = async (req, res) => {
+export const googleAuth = async (req: Request, res: Response) => {
     try {
         const { credential } = req.body;
-        if(!credential) {
-            res.status(404).json({ message:"Credential is required"})
+        if (!credential) {
+            return res.status(404).json({ message: "Credential is required" })
         }
 
         const ticket = await googleClient.verifyIdToken({
             idToken: credential,
             audience: process.env.GOOGLE_CLIENT_ID
         })
+        const payload = ticket.getPayload();
+        if (!payload) {
+            return res.status(400).json({ message: "Invalid token payload!" })
+        }
+        const { name, email, picture, sub: googleId } = payload as {
+            name?: string;
+            email?: string;
+            picture?: string;
+            sub?: string
+        };
 
-        const { name, email, picture, sub: googleId } = ticket.getPayload();
+        if (!email) {
+            return res.status(400).json({ message: "Google acount no email!" });
+        }
 
         let user = await User.findOne({ email });
 
@@ -93,31 +104,32 @@ export const googleAuth = async (req, res) => {
             })
         } else if (!user.googleId) {
             user.googleId = googleId,
-            user.image = picture
+                user.image = picture
             await user.save();
         }
 
         const userDetails = await User.findOne({ email }).select("-password");
+        if (!userDetails) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
 
-        const user_token = await jwt.sign(
-            { userId: userDetails._id},
-            process.env.JWT_SECRET_KEY,
+        const user_token = jwt.sign(
+            { userId: userDetails._id },
+            process.env.JWT_SECRET_KEY!,
             { expiresIn: "60d" }
         )
 
-        res.status(200).cookie("user_token", user_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-            maxAge: 60 * 24 * 60 * 60 * 1000
-        }).json({ success: true, message: "Google authentication successfull!", userDetails })
+        res.status(200).cookie("user_token", user_token, cookieOptions).json({ success: true, message: "Google authentication successfull!", userDetails })
     } catch (error) {
         console.log(error);
         res.status(400).json({ message: "Internal server error!", error });
     }
 }
 
-export const userLogout = async (req, res) => {
+export const userLogout = async (req: Request, res: Response) => {
     try {
         const userId = req.id; // now available via middleware
 
@@ -131,7 +143,7 @@ export const userLogout = async (req, res) => {
         res.clearCookie("user_token", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         });
 
         return res.json({ success: true, message: "Logout successful!" });
@@ -141,10 +153,13 @@ export const userLogout = async (req, res) => {
     }
 };
 
-export const getUserDetails = async (req, res) => {
+export const getUserDetails = async (req: Request, res: Response) => {
     try {
         const userId = req.id;
         const user = await User.findOne({ _id: userId }).select("-password -__v");
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found!" })
+        }
         res.status(200).json({ success: true, user })
     } catch (error) {
         console.log(error);
@@ -152,7 +167,7 @@ export const getUserDetails = async (req, res) => {
     }
 }
 
-export const updateUserDetails = async (req, res) => {
+export const updateUserDetails = async (req: Request<{}, {}, UpdateUserDTO>, res: Response) => {
     try {
         const userId = req.id;
         const { fullName, image, gender, address, city, zip, state } = req.body;
@@ -169,7 +184,7 @@ export const updateUserDetails = async (req, res) => {
     }
 }
 
-export const updateUserTimezone = async (req, res) => {
+export const updateUserTimezone = async (req: Request<{}, {}, UserTimeZone>, res: Response) => {
     try {
         const userId = req.id;
         if (!userId) {
@@ -179,7 +194,6 @@ export const updateUserTimezone = async (req, res) => {
         const updateUser = await User.findByIdAndUpdate({ _id: userId }, {
             timezone,
         }, { new: true, runValidators: true })
-        console.log(updateUser);
         res.status(200).json({ success: true, message: "User timezone updated!" })
     } catch (error) {
         console.log(error);

@@ -15,30 +15,25 @@ import nutritionistRouter from "../routes/vet-gpt/nutritionist/nutritionistRoute
 import allergyCoachRouter from "../routes/vet-gpt/allergy-itch-coach/allergyCoachRoutes.js";
 import cron from "node-cron";
 import pushRouter from "../routes/pushRouter.js";
-import { sendMedPushNotificationsLogic, sendPushNotificationsLogic } from "../controllers/pushController.js";
+import { sendMedPushNotificationsLogic } from "../controllers/pushController.js";
 import reminderRouter from "../routes/reminder/reminderRoutes.js";
 import { resetMedReminders } from "../controllers/petsController.js";
-import { resetReminders } from "../controllers/reminder/reminderController.js";
 configDotenv();
-
 // server config
 const app = express();
 const PORT = process.env.PORT;
 connectDB();
 connectCloudinary();
-
 // middleware
 app.use(express.json());
 app.use(cookieParser());
-
 // List of allowed origins (full URLs)
 const allowedOrigins = [
-    'http://localhost:3000',           // local dev
-    'https://petvetpals.com',          // production
-    'https://www.petvetpals.com',      // production with www
-    'https://petvetpals.vercel.app',   // Vercel deployment
+    'http://localhost:3000', // local dev
+    'https://petvetpals.com', // production
+    'https://www.petvetpals.com', // production with www
+    'https://petvetpals.vercel.app', // Vercel deployment
 ];
-
 // CORS options
 const corsOptions = {
     origin: (origin, callback) => {
@@ -46,12 +41,10 @@ const corsOptions = {
         if (!origin) {
             return callback(null, true);
         }
-
         // Checks if origin is in allowed list
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
-
         // Also allow any origin from allowed hostnames (for dynamic ports/subdomains)
         try {
             const url = new URL(origin);
@@ -61,14 +54,13 @@ const corsOptions = {
                 'www.petvetpals.com',
                 'petvetpals.vercel.app',
             ];
-
             if (allowedHostnames.includes(url.hostname)) {
                 return callback(null, true);
             }
-        } catch (err) {
+        }
+        catch (err) {
             console.log('Invalid origin format:', origin);
         }
-
         console.log('Blocked by CORS:', origin);
         return callback(new Error('Not allowed by CORS'));
     },
@@ -76,10 +68,8 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 };
-
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
-
 // ------CRON JOB ONLY FOR LOCALHOST-------
 // CRON job running every 1 minute to send push notifications
 cron.schedule("*/1 * * * *", async () => {
@@ -89,7 +79,8 @@ cron.schedule("*/1 * * * *", async () => {
         console.log(`Sent ${med_reminder_sent} med push notifications.`);
         // const reminder_sent = await sendPushNotificationsLogic();
         // console.log(`Sent ${reminder_sent} general push notifications.`);
-    } catch (err) {
+    }
+    catch (err) {
         console.error("Cron push error:", err);
     }
 });
@@ -106,31 +97,25 @@ cron.schedule("*/1 * * * *", async () => {
         //         })
         //     }
         // );
-        await resetMedReminders(
-            { method: 'GET' },
-            {
-                status: (code) => ({
-                    json: (data) => console.log(`Med reminders reset job response (${code}):`, data)
-                })
-            }
-        );
-        console.log("Both reminder reset jobs completed.")
-    } catch (err) {
+        await resetMedReminders({ method: 'GET' }, {
+            status: (code) => ({
+                json: (data) => console.log(`Med reminders reset job response (${code}):`, data)
+            })
+        });
+        console.log("Both reminder reset jobs completed.");
+    }
+    catch (err) {
         console.error("Error running reminder reset job:", err);
     }
 });
-
-
 // ROUTES
 app.get("/", (req, res) => {
-    res.send("Hello pawsome people, welcome to PetVetPals!")
-})
-
+    res.send("Hello pawsome people, welcome to PetVetPals!");
+});
 // Pet Owner Routes
 app.use("/api/user", userRouter);
 app.use("/api/appointment", appointmentRouter);
 app.use("/api/pet", petRouter);
-
 // VetGPT Routes
 // Symptom router
 app.use("/api/symptoms", symptomRouter);
@@ -138,25 +123,19 @@ app.use("/api/symptoms", symptomRouter);
 app.use("/api/nutritionist", nutritionistRouter);
 // Allergy and Itch Coach router
 app.use("/api/allergy-itch-coach", allergyCoachRouter);
-
 // Reminder router
 app.use("/api/reminder", reminderRouter);
-
 // Push notification router
 app.use("/api/push", pushRouter);
-
 // Veterinarian routes
 app.use("/api/vet", vetRouter);
-
 // Messenger between pet owner and vet
 app.use("/api/message", messageRouter);
-
 const production = process.env.NODE_ENV === "production";
 if (!production) {
     app.listen(PORT, () => {
-        console.log(`The server is running on port: http://localhost:${PORT}`)
-    })
+        console.log(`The server is running on port: http://localhost:${PORT}`);
+    });
 }
-
 export default app;
 export const handler = serverless(app);
