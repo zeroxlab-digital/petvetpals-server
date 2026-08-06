@@ -108,12 +108,13 @@ cron.schedule("*/1 * * * *", async () => {
         //     }
         // );
         await resetMedReminders(
-            { method: 'GET' },
+            { method: 'GET' } as any,
             {
                 status: (code: number) => ({
                     json: (data: unknown) => console.log(`Med reminders reset job response (${code}):`, data)
                 })
-            }
+            } as any,
+            () => {}
         );
         console.log("Both reminder reset jobs completed.")
     } catch (err) {
