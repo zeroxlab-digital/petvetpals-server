@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx src/api/server.ts",
     "build": "tsx",
-    "start": "node dist/api/server.ts"
+    "start": "node dist/api/server.js"
   },
   "author": "",
   "license": "ISC",
