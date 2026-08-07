@@ -1,4 +1,24 @@
-export const healthyWeightRangesByBreed = {
+export interface WeightRange {
+    min: number;
+    max: number;
+}
+
+export type DogSizeCategory =
+    | "small"
+    | "medium"
+    | "large"
+    | "giant";
+
+export interface HealthyWeightRanges {
+    dog: Record<string, WeightRange>;
+    cat: Record<string, WeightRange>;
+    fallback: {
+        dog: Record<DogSizeCategory, WeightRange>;
+        cat: WeightRange;
+    };
+}
+
+export const healthyWeightRangesByBreed: HealthyWeightRanges = {
   dog: {
     // Breed-specific healthy weight ranges for dogs
     "labrador retriever": { min: 55, max: 80 },
@@ -69,7 +89,7 @@ export const healthyWeightRangesByBreed = {
 };
 
 // Breed → size category (for dogs only)
-export const dogBreedSizeCategory = {
+export const dogBreedSizeCategory: Record<string, DogSizeCategory> = {
   "labrador retriever": "large",
   "german shepherd": "large",
   "golden retriever": "large",
