@@ -1,7 +1,7 @@
 declare namespace Express {
     export interface Request {
         id: string;
-        file?: Multer.File;
+        file: Multer.File;
         role?: 'user' | 'vet';
     }
 }
