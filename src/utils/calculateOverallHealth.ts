@@ -1,15 +1,37 @@
 
-import { dogBreedSizeCategory, healthyWeightRangesByBreed } from "./healthyWeightRanges.js";
+import { dogBreedSizeCategory, healthyWeightRangesByBreed, WeightRange } from "./healthyWeightRanges.js";
 
-const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+interface MetricEntry {
+    value: number;
+}
+
+interface Pet {
+    type?: string;
+    breed?: string;
+
+    weight?: MetricEntry[];
+    activity_level?: MetricEntry[];
+    energy_level?: MetricEntry[];
+}
+
+const clamp = (
+    num: number,
+    min: number,
+    max: number
+): number => Math.min(Math.max(num, min), max);
+
 
 // Determine healthy weight range based on species + breed
-function getHealthyWeightRange(pet) {
+function getHealthyWeightRange(pet: Pet): WeightRange {
     const species = pet.type?.toLowerCase();
     const breed = pet.breed?.toLowerCase();
 
     // --- 1. If species is dog and breed range exists ----
-    if (species === "dog") {
+    if (
+        species === "dog" &&
+        breed &&
+        healthyWeightRangesByBreed.dog[breed]
+    ) {
         if (healthyWeightRangesByBreed.dog[breed]) {
             return healthyWeightRangesByBreed.dog[breed];
         }
@@ -25,7 +47,11 @@ function getHealthyWeightRange(pet) {
     }
 
     // --- 4. Cats: check breed first ----
-    if (species === "cat") {
+    if (
+        species === "cat" &&
+        breed &&
+        healthyWeightRangesByBreed.cat[breed]
+    ) {
         if (healthyWeightRangesByBreed.cat[breed]) {
             return healthyWeightRangesByBreed.cat[breed];
         }
@@ -36,7 +62,7 @@ function getHealthyWeightRange(pet) {
     return { min: 5, max: 20 };
 }
 
-export default function calculateOverallHealth(pet) {
+export default function calculateOverallHealth(pet: any) {
     if (!pet) return 0;
 
     // -----------------------------------------------------

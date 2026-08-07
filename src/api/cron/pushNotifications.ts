@@ -1,6 +1,7 @@
+import { NextFunction, Request, Response } from "express";
 import { sendMedPushNotificationsLogic, sendPushNotificationsLogic } from "../../controllers/pushController.js";
 
-export default async function handler(req, res) {
+export default async function handler(req: Request, res: Response, next: NextFunction) {
   // at first verify secret key before running anything
   const providedKey = req.query.key || req.headers["x-cron-secret"];
   if (providedKey !== process.env.CRON_SECRET) {
@@ -19,8 +20,7 @@ export default async function handler(req, res) {
       success: true,
       message: `Sent ${medCount} med and ${generalCount} general notifications.`,
     });
-  } catch (error) {
-    console.error("Cron push error:", error);
-    return res.status(500).json({ success: false, error: error.message });
+  } catch (error: unknown) {
+    next(error);
   }
 }

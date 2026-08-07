@@ -1,10 +1,21 @@
+import { Request, Response, NextFunction } from "express";
 import { MedicationReminder } from "../models/medicationsModel.js";
 import { PushSubscription } from "../models/pushSubscription.js";
 import { Reminder } from "../models/reminders/remindersSchema.js";
 import webpush from "../utils/webPush.js";
 import moment from "moment-timezone";
+import { Types } from "mongoose";
 
-export const savePushSubscription = async (req, res) => {
+interface PushSubscriptionDTO {
+    endpoint: string;
+    keys: {
+        p256dh: string;
+        auth: string;
+    };
+    user?: Types.ObjectId;
+}
+
+export const savePushSubscription = async (req: Request<{}, {}, PushSubscriptionDTO>, res: Response, next: NextFunction) => {
     try {
         const userId = req.id;
         const sub = req.body;
@@ -24,12 +35,14 @@ export const savePushSubscription = async (req, res) => {
         );
 
         res.status(200).json({ success: true, message: "Subscription saved" });
-    } catch (error) {
-        console.error("Error saving subscription:", error);
-        res.status(500).json({ success: false, message: "Internal error" });
+    } catch (error: unknown) {
+        next(error)
     }
 };
 
+interface PushError extends Error {
+    statusCode?: number;
+}
 export const sendMedPushNotificationsLogic = async () => {
     const subscriptions = await PushSubscription.find();
 
@@ -102,7 +115,7 @@ export const sendMedPushNotificationsLogic = async () => {
             reminder.user?._id?.toString() || pet.user?.toString();
 
         const userSubs = subscriptions.filter(
-            (s) => s.user?.toString() === userId
+            (s: any) => s.user?.toString() === userId
         );
 
         for (const sub of userSubs) {
@@ -122,9 +135,14 @@ export const sendMedPushNotificationsLogic = async () => {
                     })
                 );
                 sent++;
-            } catch (err) {
-                if (err.statusCode === 410 || err.statusCode === 404) {
-                    await PushSubscription.deleteOne({ endpoint: sub.endpoint });
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    const error = err as PushError;
+                    if (error.statusCode === 410 || error.statusCode === 404) {
+                        await PushSubscription.deleteOne({
+                            endpoint: sub.endpoint
+                        });
+                    }
                 }
             }
         }
@@ -137,7 +155,7 @@ export const sendMedPushNotificationsLogic = async () => {
 export const sendPushNotificationsLogic = async () => {
     const subscriptions = await PushSubscription.find();
     const reminders = await Reminder.find()
-        .populate({ path: "user", select: "timezone" });
+        .populate<{ user: { timezone: string, _id: Types.ObjectId } }>({ path: "user", select: "timezone" });
 
     const dueReminders = [];
     let sent = 0;
@@ -189,7 +207,7 @@ export const sendPushNotificationsLogic = async () => {
         const { reminder, reminderTime, minutesLeft, index } = due;
 
         const userSubs = subscriptions.filter(
-            (s) => s.user?.toString() === reminder.user?._id.toString()
+            (s: any) => s.user?.toString() === reminder.user?._id.toString()
         );
 
         for (const sub of userSubs) {
@@ -209,9 +227,12 @@ export const sendPushNotificationsLogic = async () => {
                     })
                 );
                 sent++;
-            } catch (err) {
-                if (err.statusCode === 410 || err.statusCode === 404) {
-                    await PushSubscription.deleteOne({ endpoint: sub.endpoint });
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    const error = err as PushError;
+                    if (error.statusCode === 410 || error.statusCode === 404) {
+                        await PushSubscription.deleteOne({ endpoint: sub.endpoint });
+                    }
                 }
             }
         }
