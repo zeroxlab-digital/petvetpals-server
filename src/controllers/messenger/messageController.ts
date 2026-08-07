@@ -1,8 +1,9 @@
+import { NextFunction, Request, Response } from "express";
 import { Conversation } from "../../models/messenger/conversationModel.js";
 import { Message } from "../../models/messenger/messageModel.js";
 import { User } from "../../models/userModel.js";
 
-export const handleSendMessage = async (req, res) => {
+export const handleSendMessage = async (req: Request<{id: string}, {}, { message: string }>, res: Response, next: NextFunction) => {
     try {
         const senderId = req.id;
         const receiverId = req.params.id;
@@ -14,7 +15,7 @@ export const handleSendMessage = async (req, res) => {
             return res.status(401).json({ message: "Sender role isn't defined from middleware!" });
         }
         // Sets the role
-        let userId, vetId;
+        let userId: string, vetId: string;
         if (req.role === "user") {
             userId = senderId;
             vetId = receiverId;
@@ -40,13 +41,12 @@ export const handleSendMessage = async (req, res) => {
         // Socket.io To-Do
 
         res.status(201).json({ message: "A new message was sent!", newMessage })
-    } catch (error) {
-        console.log(error.message)
-        res.status(500).json({ message: "Error while sending message!", error: error.message })
+    } catch (error: unknown) {
+        next(error)
     }
 }
 
-export const handleGetMessage = async (req, res) => {
+export const handleGetMessage = async (req: Request<{id: string}>, res: Response, next: NextFunction) => {
     try {
         const senderId = req.id;
         const receiverId = req.params.id;
@@ -55,7 +55,7 @@ export const handleGetMessage = async (req, res) => {
             return res.status(401).json({ message: "Invalid role! Must be user or vet" });
         }
 
-        let userId, vetId;
+        let userId: string, vetId: string;
 
         if (req.role === "user") {
             userId = senderId;
@@ -80,24 +80,22 @@ export const handleGetMessage = async (req, res) => {
         }
 
         res.status(200).json({ success: true, messages: conversation.messages });
-    } catch (error) {
-        console.log(error.message);
-        res.status(500).json({ message: "Error while getting messages!", error: error.message });
+    } catch (error: unknown) {
+        next(error)
     }
 };
 
 
-export const handleGetUsersMessasged = async (req, res) => {
+export const handleGetUsersMessasged = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const vetId = req.id;
         const conversation = await Conversation.find({ vet: vetId }).select("user");
-        if(conversation.length < 1) {
+        if(!conversation.length) {
             return res.status(404).json({ message: "No conversation found!" })
         }
         const users = await User.find({ _id: conversation.map(convo => convo.user) }).select("-password -__v -address");
         res.status(200).json({ success: true, users })
-    } catch (error) {
-        console.log(error.message);
-        res.status(500).json({ message: "Error while users messaged!", error: error.message });
+    } catch (error: unknown) {
+        next(error)
     }
 }
