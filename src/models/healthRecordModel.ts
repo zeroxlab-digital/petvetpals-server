@@ -1,20 +1,20 @@
-import mongoose from 'mongoose';
-const { Schema, model } = mongoose;
+import { Schema, model, InferSchemaType } from 'mongoose';
 
 // Medical History Schema
 const medicalHistorySchema = new Schema({
     pet: {
         type: Schema.Types.ObjectId,
-        ref: 'Pet',
+        ref: "Pet",
         required: true
     },
     vetOrClinic: {
         type: String,
-        required: false
+        default: null
     },
     type: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     diagnosis: {
         type: String,
@@ -22,7 +22,7 @@ const medicalHistorySchema = new Schema({
     },
     treatment: {
         type: String,
-        required: false
+        default: null
     },
     date: {
         type: Date,
@@ -42,7 +42,10 @@ const medicalHistorySchema = new Schema({
         default: null
     }
 }, { timestamps: true });
-export const MedicalHistory = model('MedicalHistory', medicalHistorySchema);
+
+type IMedicalHistory = InferSchemaType<typeof medicalHistorySchema>;
+export const MedicalHistory = model<IMedicalHistory>('MedicalHistory', medicalHistorySchema);
+
 
 // Vaccination Schema
 const vaccinationSchema = new Schema({
@@ -53,7 +56,7 @@ const vaccinationSchema = new Schema({
     },
     provider: {
         type: String,
-        required: false
+        default: null
     },
     vaccine: {
         type: String,
@@ -66,7 +69,7 @@ const vaccinationSchema = new Schema({
     },
     next_due: {
         type: Date,
-        required: false
+        default: null
     },
     status: {
         type: String,
@@ -79,7 +82,8 @@ const vaccinationSchema = new Schema({
         default: null
     }
 }, { timestamps: true });
-export const Vaccination = model('Vaccination', vaccinationSchema);
+type IVaccination = InferSchemaType<typeof vaccinationSchema>;
+export const Vaccination = model<IVaccination>('Vaccination', vaccinationSchema);
 
 // Allergy Condition Schema
 const allergyConditionSchema = new Schema({
@@ -95,7 +99,8 @@ const allergyConditionSchema = new Schema({
     },
     name: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     severity: {
         type: String,
@@ -105,12 +110,13 @@ const allergyConditionSchema = new Schema({
     },
     diagnosedDate: {
         type: Date,
-        default: null,
-        required: false
+        default: null
     },
     description: {
         type: String,
         default: null
     }
 }, { timestamps: true });
-export const AllergyCondition = model('AllergyCondition', allergyConditionSchema);
+
+type IAllergyCondition = InferSchemaType<typeof allergyConditionSchema>
+export const AllergyCondition = model<IAllergyCondition>('AllergyCondition', allergyConditionSchema);

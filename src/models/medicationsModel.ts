@@ -1,18 +1,19 @@
-import mongoose from "mongoose";
+import { Schema, model, InferSchemaType } from 'mongoose';
 
-const medicationSchema = mongoose.Schema({
+const medicationSchema = new Schema({
     pet: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "Pet",
         required: true
     },
     medication: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     dosage: {
         type: String,
-        required: false
+        default: null
     },
     frequency: {
         type: String,
@@ -29,7 +30,7 @@ const medicationSchema = mongoose.Schema({
     },
     end_date: {
         type: Date,
-        required: false
+        default: null
     },
     is_ongoing: {
         type: Boolean,
@@ -38,43 +39,41 @@ const medicationSchema = mongoose.Schema({
     },
     time_of_day: {
         type: String,
-        default: null,
-        required: false
+        default: null
     },
     next_due: {
         type: Date,
-        default: null,
-        required: false
+        default: null
     },
     instructions: {
         type: String,
-        default: null,
-        required: false
+        default: null
     },
 }, { timestamps: true })
 
-export const Medication = mongoose.model("Medication", medicationSchema);
+type IMedication = InferSchemaType<typeof medicationSchema>;
+export const Medication = model<IMedication>('Medication', medicationSchema);
 
 // Medication Reminders Schema
-const medicationReminderSchema = mongoose.Schema({
+const medicationReminderSchema = new Schema({
     user: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "User",
         required: true
     },
     pet: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "Pet",
         required: true
     },
     medication: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "Medication",
         required: true
     },
     frequency: {
         type: String,
-        required: false
+        default: null
     },
     starting_date: {
         type: Date,
@@ -83,7 +82,6 @@ const medicationReminderSchema = mongoose.Schema({
     },
     end_date: {
         type: Date,
-        required: false,
         default: null
     },
     reminder_times: [
@@ -111,4 +109,5 @@ const medicationReminderSchema = mongoose.Schema({
     }
 }, { timestamps: true });
 
-export const MedicationReminder = mongoose.model("MedicationReminder", medicationReminderSchema);
+type IMedicationReminder = InferSchemaType<typeof medicationReminderSchema>;
+export const MedicationReminder = model<IMedicationReminder>('MedicationReminder', medicationReminderSchema);

@@ -1,23 +1,24 @@
-import mongoose from "mongoose";
+import { Schema, model, InferSchemaType } from 'mongoose';
 
-const petSchema = mongoose.Schema({
+const petSchema = new Schema({
     user: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "User",
         required: true
     },
     type: {
         type: String,
+        enum: ['dog', 'cat'],
         required: true
     },
     name: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     image: {
         type: String,
-        default: null,
-        required: false
+        default: null
     },
     date_of_birth: {
         type: Date,
@@ -59,4 +60,7 @@ const petSchema = mongoose.Schema({
         max: 100
     }
 }, { timestamps: true })
-export const Pet = mongoose.model("Pet", petSchema);
+
+type IPet = InferSchemaType<typeof petSchema>;
+
+export const Pet = model<IPet>('Pet', petSchema);
