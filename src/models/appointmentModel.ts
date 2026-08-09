@@ -1,13 +1,13 @@
-import mongoose from "mongoose";
+import { Schema, model, InferSchemaType } from 'mongoose';
 
-const appointmentSchema = new mongoose.Schema({
+const appointmentSchema = new Schema({
     user: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "User",
         required: true
     },
     vet: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "Vet",
         required: true
     },
@@ -26,15 +26,16 @@ const appointmentSchema = new mongoose.Schema({
         default: null
     },
     pet: {
-        type: Object,
-        default: null,
-        required: false
+        type: Schema.Types.ObjectId,
+        ref: "Pet",
+        default: null
     },
     purpose: {
         type: String,
-        default: null,
-        required: false
+        default: null
     }
 }, { timestamps: true })
 
-export const Appointment = mongoose.model("Appointment", appointmentSchema);
+type IAppointment = InferSchemaType<typeof appointmentSchema>;
+
+export const Appointment = model<IAppointment>('Appointment', appointmentSchema);
