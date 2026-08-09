@@ -64,7 +64,10 @@ export const viewAppointments = async (req: Request, res: Response, next: NextFu
         const userId = req.id;
         const appointments = await Appointment.find({
             user: userId,
-        }).populate({ path: 'vet', select: "-password -slots_booked" });
+        })
+        .populate({ path: 'vet', select: "-password -slots_booked -createdAt -updatedAt -__v" })
+        .populate({ path: 'pet', select: "-user -createdAt -updatedAt -__v"});
+        console.log("appointments:", appointments)
         res.status(200).json({ success: true, appointments })
     } catch (error: unknown) {
         next(error)

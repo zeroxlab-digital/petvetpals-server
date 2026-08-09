@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx src/api/server.ts",
+    "dev": "tsx watch src/api/server.ts",
     "build": "tsc",
     "start": "node dist/api/server.js"
   },
