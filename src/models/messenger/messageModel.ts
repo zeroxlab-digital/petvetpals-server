@@ -1,13 +1,13 @@
-import mongoose from "mongoose";
+import { Schema, model, InferSchemaType } from 'mongoose';
 
-const messageModel = new mongoose.Schema({
+const messageSchema = new Schema({
     user: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "User",
         required: true
     },
     vet: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "Vet",
         required: true
     },
@@ -22,4 +22,6 @@ const messageModel = new mongoose.Schema({
     }
 }, { timestamps: true })
 
-export const Message = mongoose.model("Message", messageModel);
+type IMessage = InferSchemaType<typeof messageSchema>;
+
+export const Message = model<IMessage>('Message', messageSchema);
