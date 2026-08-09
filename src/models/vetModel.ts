@@ -1,18 +1,22 @@
-import mongoose from "mongoose";
+import { Schema, model, InferSchemaType } from 'mongoose';
 
-const vetSchema = mongoose.Schema({
+const vetSchema = new Schema({
     fullName: {
         type: String,
         required: true,
+        trim: true
     },
     email: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        lowercase: true,
+        trim: true
     },
     password: {
         type: String,
-        required: true
+        required: true,
+        minLength: [6, 'Password must be at least 6 characters!']
     },
     gender: {
         type: String,
@@ -28,13 +32,12 @@ const vetSchema = mongoose.Schema({
         default: null,
     },
     specialities: {
-        type: Array,
-        default: [],
-        required: true
+        type: [String],
+        default: []
     },
     about: {
         type: String,
-        default: "",
+        default: null,
     },
     fees: {
         type: Number,
@@ -42,18 +45,24 @@ const vetSchema = mongoose.Schema({
         required: true
     },
     degrees: {
-        type: Array,
-        default: [],
-        required: true
+        type: [String],
+        default: []
     },
     experience_years: {
         type: Number,
-        default: 0,
-        required: true
+        default: 0
     },
     experiences: {
-        type: Array,
-        default: [],
+        type: [
+            {
+                title: { type: String, trim: true },
+                description: { type: String, trim: true },
+                work_place: { type: String, trim: true },
+                start_date: { type: Date },
+                end_date: { type: Date, default: null }
+            }
+        ],
+        default: []
     },
     works_at: {
         type: String,
@@ -64,7 +73,7 @@ const vetSchema = mongoose.Schema({
         default: null
     },
     languages: {
-        type: Array,
+        type: [String],
         default: []
     },
     slots_booked: {
@@ -74,4 +83,6 @@ const vetSchema = mongoose.Schema({
     },
 }, { timestamps: true, minimize: false })
 
-export const Vet = mongoose.model("Vet", vetSchema);
+type IVet = InferSchemaType<typeof vetSchema>;
+
+export const Vet = model<IVet>('Vet', vetSchema);
