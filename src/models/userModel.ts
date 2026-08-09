@@ -1,18 +1,22 @@
-import mongoose from "mongoose";
+import { Schema, model, InferSchemaType } from 'mongoose';
 
-const userSchema = mongoose.Schema({
+const userSchema = new Schema({
     fullName: {
         type: String,
         required: true,
+        trim: true
     },
     email: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        trim: true,
+        lowercase: true
     },
     password: {
         type: String,
-        default: null
+        minLength: [6, 'Password must be at least 6 characters!'],
+        required: true
     },
     googleId: {
         type: String,
@@ -20,7 +24,7 @@ const userSchema = mongoose.Schema({
     },
     gender: {
         type: String,
-        enum: ["male", "female"],
+        enum: ['male', 'female'],
         default: null
     },
     image: {
@@ -45,12 +49,15 @@ const userSchema = mongoose.Schema({
     },
     membership_status: {
         type: String,
-        default: "Basic"
+        enum: ['basic', 'premium'],
+        default: "basic"
     },
     timezone: {
         type: String,
         default: "UTC",
     }
-}, { timestamps: true })
+}, { timestamps: true });
 
-export const User = mongoose.model("User", userSchema);
+type IUser = InferSchemaType<typeof userSchema>
+
+export const User = model<IUser>('User', userSchema);
