@@ -1,35 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { extractJSON } from "../../utils/extractJson.js";
 import { AllergyItchReport } from "../../models/vet-gpt/AllergyItchModel.js";
-
-export interface AllergyReportDTO {
-    pet: {
-        type: 'dog' | 'cat';
-        name: string;
-        age: number;
-        gender: 'male' | 'female';
-        breed: string;
-    };
-    startDate: string;
-    affectedAreas: string[];
-    severity: number;
-    visibleSigns: string[];
-    currentSeason: string;
-    recentChanges: string[];
-    livingEnvironment: string;
-    currentMedications: string[];
-    knownAllergies: string[];
-    previousTreatments: string
-}
-export interface SaveAllergyReportDTO {
-    pet: string;
-    episode: {
-        length: string;
-        severity: number;
-        affected_areas: string[];
-        visible_signs: string[];
-    }
-}
+import { AllergyReportDTO, SaveAllergyReportDTO } from "../../types/vet-gpt.types.js";
 
 export const generateAllergyReport = async (req: Request<{}, {}, AllergyReportDTO>, res: Response, next: NextFunction) => {
     try {
@@ -52,7 +24,7 @@ export const generateAllergyReport = async (req: Request<{}, {}, AllergyReportDT
         } = req.body;
         console.log("pet:", pet)
         if (!startDate || !affectedAreas || !severity) {
-            res.status(400).json({ success: false, message: "Fields required - start date, affected areas and severity fields are required!" })
+            return res.status(400).json({ success: false, message: "Fields required - start date, affected areas and severity fields are required!" })
         }
 
         const prompt = `
@@ -134,7 +106,7 @@ export const generateAllergyReport = async (req: Request<{}, {}, AllergyReportDT
         // console.log("Raw allergy output:", rawOutput)
         const coach_response = extractJSON(rawOutput);
         console.log("Coach Response:", coach_response);
-        res.status(200).json({ success: true, coach_response })
+        return res.status(200).json({ success: true, coach_response })
     } catch (error: unknown) {
         next(error);
     }

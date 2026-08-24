@@ -16,9 +16,7 @@ import allergyCoachRouter from "../routes/vet-gpt/allergyCoachRoutes.js";
 import cron from "node-cron";
 import pushRouter from "../routes/pushRouter.js";
 import { sendMedPushNotificationsLogic, sendPushNotificationsLogic } from "../controllers/pushController.js";
-import reminderRouter from "../routes/reminder/reminderRoutes.js";
 import { resetMedReminders } from "../controllers/petsController.js";
-import { resetReminders } from "../controllers/reminder/reminderController.js";
 import { errorHandler } from "../middlewares/errorHandler.js";
 configDotenv();
 
@@ -140,9 +138,6 @@ app.use("/api/vet-gpt/symptoms", symptomRouter);
 app.use("/api/vet-gpt/nutritionist", nutritionistRouter);
 // Allergy and Itch Coach router
 app.use("/api/vet-gpt/allergy-itch-coach", allergyCoachRouter);
-
-// Reminder router
-app.use("/api/reminder", reminderRouter);
 
 // Push notification router
 app.use("/api/push", pushRouter);

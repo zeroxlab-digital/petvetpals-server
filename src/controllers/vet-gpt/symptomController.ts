@@ -1,24 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { SymptomReport } from "../../models/vet-gpt/SymptomReport.js";
-
-type symptoms = {
-    bodyPart: string;
-    symptoms: string[];
-}[]
-type conditions = {
-    name: string;
-    matchPercentage: number;
-}[]
-export interface GenerateSymptomReportDTO {
-    pet: {
-        type: 'dog' | 'cat';
-        name: string;
-        breed: string;
-        age: number;
-    },
-    symptoms: symptoms,
-    conditions: conditions
-}
+import { conditions, GenerateSymptomReportDTO, symptoms } from "../../types/vet-gpt.types.js";
 
 export const generateSymptomReport = async (req: Request<{}, {}, GenerateSymptomReportDTO>, res: Response, next: NextFunction) => {
     try {
@@ -85,7 +67,7 @@ export const generateSymptomReport = async (req: Request<{}, {}, GenerateSymptom
         // console.log("Symptom AI data:", data)
         const content = data.choices?.[0]?.message?.content || 'No recommendation returned.';
         console.log("CONTENT:", content)
-        res.status(200).json({ success: true, recommendation: content });
+        return res.status(200).json({ success: true, recommendation: content });
     } catch (error: unknown) {
         next(error);
     }
@@ -100,7 +82,7 @@ export const saveSymptomReport = async (req: Request<{}, {}, { petId: string, sy
         }
         const report = new SymptomReport({ petId, symptoms, conditions });
         await report.save();
-        res.status(200).json({ message: 'Report saved successfully.' });
+        return res.status(200).json({ message: 'Report saved successfully.' });
     } catch (error: unknown) {
         next(error);
     }
@@ -112,8 +94,8 @@ export const getSymptomHistory = async (req: Request<{ petId: string }, {}, {}>,
         if (!req.params.petId) {
             return res.status(400).json({ success: false, message: "Pet ID isn't provided!" })
         }
-        const reports = await SymptomReport.find({ petId: req.params.petId }).sort({ createdAt: -1 });
-        res.status(200).json(reports);
+        const reports = await SymptomReport.find({ petId: req.params.petId }).sort({ createdAt: -1 }).lean();
+        return res.status(200).json(reports);
     } catch (error: unknown) {
         next(error);
     }

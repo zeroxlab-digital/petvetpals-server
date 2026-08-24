@@ -1,22 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { extractJSON } from "../../utils/extractJson.js";
 import fetch from "node-fetch";
-
-export interface NutritionReportDTO {
-    pet: {
-        type: 'dog' | 'cat';
-        name: string;
-        age: number;
-        gender: 'male' | 'female';
-        breed: string;
-    };
-    activityLevel: string;
-    medicalConditions: string[];
-    currentSymptoms: string[];
-    treatmentGoals: string[];
-    knownAllergies: string[];
-    currentDiet: string[];
-}
+import { NutritionReportDTO } from "../../types/vet-gpt.types.js";
 
 export const generateNutritionReport = async (req: Request<{}, {}, NutritionReportDTO>, res: Response, next: NextFunction) => {
     try {
@@ -94,7 +79,7 @@ export const generateNutritionReport = async (req: Request<{}, {}, NutritionRepo
 
         console.log("PLAN:", plan)
 
-        res.json({ success: true, plan });
+        return res.json({ success: true, plan });
     } catch (error: unknown) {
         next(error);
     }
