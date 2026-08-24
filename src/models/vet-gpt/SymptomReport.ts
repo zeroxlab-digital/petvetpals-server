@@ -1,9 +1,9 @@
-import mongoose from 'mongoose';
+import { InferSchemaType, Schema, model } from 'mongoose';
 
-const SymptomReportSchema = new mongoose.Schema(
+const SymptomReportSchema = new Schema(
   {
     petId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'Pet',
       required: true,
     },
@@ -27,4 +27,6 @@ const SymptomReportSchema = new mongoose.Schema(
   }
 );
 
-export const SymptomReport = mongoose.model('SymptomReport', SymptomReportSchema);
+type ISymptom = InferSchemaType<typeof SymptomReportSchema>;
+
+export const SymptomReport = model<ISymptom>('SymptomReport', SymptomReportSchema);

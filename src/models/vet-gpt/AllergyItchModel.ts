@@ -1,6 +1,6 @@
-import mongoose, { Schema } from "mongoose";
+import { InferSchemaType, Schema, model } from 'mongoose';
 
-const AllergyItchModel = new Schema({
+const AllergyItchSchema = new Schema({
     pet: {
         type: Schema.Types.ObjectId,
         ref: 'Pet',
@@ -24,4 +24,7 @@ const AllergyItchModel = new Schema({
         }
     }
 }, { timestamps: true });
-export const AllergyItchReport = mongoose.model("AllergyItchReport", AllergyItchModel);
+
+type IAllergyReport = InferSchemaType<typeof AllergyItchSchema>;
+
+export const AllergyItchReport = model<IAllergyReport>('AllergyItchReport', AllergyItchSchema);
