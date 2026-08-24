@@ -1,8 +1,6 @@
 import express from "express";
-import { configDotenv } from "dotenv";
-import userAuthenticated from "../../../middlewares/userAuthenticated.js";
-import { generateAllergyReport, getAllergyHistories, saveAllergyReport } from "../../../controllers/vet-gpt/allergyCoachController.js";
-configDotenv();
+import userAuthenticated from "../../middlewares/userAuthenticated.js";
+import { generateAllergyReport, getAllergyHistories, saveAllergyReport } from "../../controllers/vet-gpt/allergyCoachController.js";
 const allergyCoachRouter = express.Router();
 
 allergyCoachRouter.post("/gpt", userAuthenticated, generateAllergyReport);

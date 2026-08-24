@@ -1,8 +1,6 @@
 import express from 'express';
-import { configDotenv } from 'dotenv';
-import userAuthenticated from '../../../middlewares/userAuthenticated.js';
-import { generateSymptomReport, getSymptomHistory, saveSymptomReport } from '../../../controllers/vet-gpt/symptomController.js';
-configDotenv();
+import userAuthenticated from '../../middlewares/userAuthenticated.js';
+import { generateSymptomReport, getSymptomHistory, saveSymptomReport } from '../../controllers/vet-gpt/symptomController.js';
 
 const symptomRouter = express.Router();
 
