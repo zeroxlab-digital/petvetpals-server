@@ -10,9 +10,9 @@ import appointmentRouter from "../routes/appointmentRouter.js";
 import petRouter from "../routes/petRouter.js";
 import messageRouter from "../routes/messenger/messeageRoute.js";
 import serverless from "serverless-http";
-import symptomRouter from "../routes/vet-gpt/symptom-checker/symptomRoutes.js";
-import nutritionistRouter from "../routes/vet-gpt/nutritionist/nutritionistRoutes.js";
-import allergyCoachRouter from "../routes/vet-gpt/allergy-itch-coach/allergyCoachRoutes.js";
+import symptomRouter from "../routes/vet-gpt/symptomRoutes.js";
+import nutritionistRouter from "../routes/vet-gpt/nutritionistRoutes.js";
+import allergyCoachRouter from "../routes/vet-gpt/allergyCoachRoutes.js";
 import cron from "node-cron";
 import pushRouter from "../routes/pushRouter.js";
 import { sendMedPushNotificationsLogic, sendPushNotificationsLogic } from "../controllers/pushController.js";
@@ -135,11 +135,11 @@ app.use("/api/pet", petRouter);
 
 // VetGPT Routes
 // Symptom router
-app.use("/api/symptoms", symptomRouter);
+app.use("/api/vet-gpt/symptoms", symptomRouter);
 // Nutritionist router
-app.use("/api/nutritionist", nutritionistRouter);
+app.use("/api/vet-gpt/nutritionist", nutritionistRouter);
 // Allergy and Itch Coach router
-app.use("/api/allergy-itch-coach", allergyCoachRouter);
+app.use("/api/vet-gpt/allergy-itch-coach", allergyCoachRouter);
 
 // Reminder router
 app.use("/api/reminder", reminderRouter);

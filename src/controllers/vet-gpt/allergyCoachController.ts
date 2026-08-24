@@ -1,37 +1,37 @@
-import express from "express";
-import { configDotenv } from "dotenv";
-import { AllergyItchReport } from "../../../models/vet-gpt/AllergyItchModel.js";
-import userAuthenticated from "../../../middlewares/userAuthenticated.js";
-configDotenv();
-const allergyCoachRouter = express.Router();
+import { NextFunction, Request, Response } from "express";
+import { extractJSON } from "../../utils/extractJson.js";
+import { AllergyItchReport } from "../../models/vet-gpt/AllergyItchModel.js";
 
-// Extract first valid JSON object from string
-function extractJSONFromAI(text) {
-    try {
-        const firstBrace = text.indexOf("{");
-        if (firstBrace === -1) return null;
-
-        // Count braces to find matching closing brace
-        let count = 0;
-        let endIndex = -1;
-        for (let i = firstBrace; i < text.length; i++) {
-            if (text[i] === "{") count++;
-            else if (text[i] === "}") count--;
-            if (count === 0) {
-                endIndex = i + 1;
-                break;
-            }
-        }
-        if (endIndex === -1) return null;
-
-        const jsonString = text.slice(firstBrace, endIndex);
-        return JSON.parse(jsonString);
-    } catch {
-        return null;
+export interface AllergyReportDTO {
+    pet: {
+        type: 'dog' | 'cat';
+        name: string;
+        age: number;
+        gender: 'male' | 'female';
+        breed: string;
+    };
+    startDate: string;
+    affectedAreas: string[];
+    severity: number;
+    visibleSigns: string[];
+    currentSeason: string;
+    recentChanges: string[];
+    livingEnvironment: string;
+    currentMedications: string[];
+    knownAllergies: string[];
+    previousTreatments: string
+}
+export interface SaveAllergyReportDTO {
+    pet: string;
+    episode: {
+        length: string;
+        severity: number;
+        affected_areas: string[];
+        visible_signs: string[];
     }
 }
 
-allergyCoachRouter.post("/gpt", async (req, res) => {
+export const generateAllergyReport = async (req: Request<{}, {}, AllergyReportDTO>, res: Response, next: NextFunction) => {
     try {
         const {
             // Pet
@@ -52,8 +52,9 @@ allergyCoachRouter.post("/gpt", async (req, res) => {
         } = req.body;
         console.log("pet:", pet)
         if (!startDate || !affectedAreas || !severity) {
-            throw new Error({ message: "Start date, affected areas and severity fields are required!" })
+            res.status(400).json({ success: false, message: "Fields required - start date, affected areas and severity fields are required!" })
         }
+
         const prompt = `
         You are an expert AI Allergy & Itch Care Coach for pets, with extensive experience in veterinary dermatology and allergy management. 
         Create a structured, personalized, and actionable care plan based on the pet case below. Focus on safety, practicality, and prevention of complications. 
@@ -131,46 +132,40 @@ allergyCoachRouter.post("/gpt", async (req, res) => {
         // console.log("Allergy Coach AI data:", data)
         const rawOutput = data?.choices?.[0]?.text;
         // console.log("Raw allergy output:", rawOutput)
-        const coach_response = extractJSONFromAI(rawOutput);
+        const coach_response = extractJSON(rawOutput);
         console.log("Coach Response:", coach_response);
         res.status(200).json({ success: true, coach_response })
-    } catch (error) {
-        console.log(error);
-        res.status(400).json({ message: "Internal server error", error })
+    } catch (error: unknown) {
+        next(error);
     }
-})
+}
 
-allergyCoachRouter.post("/save", async (req, res) => {
+export const saveAllergyReport = async (req: Request<{}, {}, SaveAllergyReportDTO>, res: Response, next: NextFunction) => {
     try {
         const { pet, episode } = req.body;
         if (!pet || !episode) {
-            throw new Error({ message: "Pet ID and episode fields are required!" })
+            return res.status(400).json({ success: false, message: "Pet ID and episode fields are required!" });
         }
         const allergyItchReport = new AllergyItchReport({
             pet,
             episode
         });
         await allergyItchReport.save();
-        res.status(200).json({ success: true, message: "Allergy & Itch report saved successfully." });
+        return res.status(201).json({ success: true, message: "Allergy & Itch report saved successfully." });
+    } catch (error: unknown) {
+        next(error);
     }
-    catch (error) {
-        console.log(error);
-        res.status(400).json({ message: "Internal server error", error })
-    }
-})
+}
 
-allergyCoachRouter.get("/history/:petId", async (req, res) => {
+export const getAllergyHistories = async (req: Request<{ petId: string }>, res: Response, next: NextFunction) => {
     try {
         const { petId } = req.params;
         if (!petId) {
-            throw new Error({ message: "Pet ID is required!" })
+            return res.status(400).json({ success: false, message: "Pet ID is required!" });
         }
-        const reports = await AllergyItchReport.find({ pet: petId }).sort({ createdAt: -1 });
-        res.status(200).json({ success: true, reports });
-    } catch (error) {
-        console.log(error);
-        res.status(400).json({ message: "Internal server error", error })
+        const reports = await AllergyItchReport.find({ pet: petId }).sort({ createdAt: -1 }).lean();
+        return res.status(200).json({ success: true, reports });
+    } catch (error: unknown) {
+        next(error);
     }
-})
-
-export default allergyCoachRouter;
+}
