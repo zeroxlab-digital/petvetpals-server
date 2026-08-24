@@ -1,5 +1,14 @@
 import { NextFunction, Request, Response } from "express";
+import { SymptomReport } from "../../models/vet-gpt/SymptomReport.js";
 
+type symptoms = {
+    bodyPart: string;
+    symptoms: string[];
+}[]
+type conditions = {
+    name: string;
+    matchPercentage: number;
+}[]
 export interface GenerateSymptomReportDTO {
     pet: {
         type: 'dog' | 'cat';
@@ -7,14 +16,8 @@ export interface GenerateSymptomReportDTO {
         breed: string;
         age: number;
     },
-    symptoms: {
-        bodyPart: string;
-        symptoms: string[];
-    }[],
-    conditions: {
-        name: string;
-        matchPercentage: number;
-    }[]
+    symptoms: symptoms,
+    conditions: conditions
 }
 
 export const generateSymptomReport = async (req: Request<{}, {}, GenerateSymptomReportDTO>, res: Response, next: NextFunction) => {
@@ -83,6 +86,34 @@ export const generateSymptomReport = async (req: Request<{}, {}, GenerateSymptom
         const content = data.choices?.[0]?.message?.content || 'No recommendation returned.';
         console.log("CONTENT:", content)
         res.status(200).json({ success: true, recommendation: content });
+    } catch (error: unknown) {
+        next(error);
+    }
+}
+
+export const saveSymptomReport = async (req: Request<{}, {}, { petId: string, symptoms: symptoms, conditions: conditions }>, res: Response, next: NextFunction) => {
+    try {
+        const { petId, symptoms, conditions } = req.body;
+        // console.log("PET ID(Save):", petId)
+        if (!petId || !symptoms || !conditions) {
+            return res.status(400).json({ error: 'Missing required fields.' });
+        }
+        const report = new SymptomReport({ petId, symptoms, conditions });
+        await report.save();
+        res.status(200).json({ message: 'Report saved successfully.' });
+    } catch (error: unknown) {
+        next(error);
+    }
+}
+
+export const getSymptomHistory = async (req: Request<{ petId: string }, {}, {}>, res: Response, next: NextFunction) => {
+    try {
+        // console.log("PET ID(History):", req.params.petId)
+        if (!req.params.petId) {
+            return res.status(400).json({ success: false, message: "Pet ID isn't provided!" })
+        }
+        const reports = await SymptomReport.find({ petId: req.params.petId }).sort({ createdAt: -1 });
+        res.status(200).json(reports);
     } catch (error: unknown) {
         next(error);
     }
