@@ -1,6 +1,15 @@
-import { Schema, model, InferSchemaType } from 'mongoose';
+import { Schema, model, Types } from 'mongoose';
 
-const pushSubscriptionSchema = new Schema({
+interface IPushSubscription {
+    endpoint: string;
+    keys: {
+        p256dh: string;
+        auth: string;
+    };
+    user?: Types.ObjectId;
+}
+
+const pushSubscriptionSchema = new Schema<IPushSubscription>({
     endpoint: { type: String, required: true, unique: true },
     keys: {
         p256dh: { type: String, required: true },
@@ -12,6 +21,4 @@ const pushSubscriptionSchema = new Schema({
     },
 }, { timestamps: true });
 
-type IPushSubscriptionSchema = InferSchemaType<typeof pushSubscriptionSchema>
-
-export const PushSubscription = model<IPushSubscriptionSchema>('PushSubscription', pushSubscriptionSchema);
+export const PushSubscription = model<IPushSubscription>('PushSubscription', pushSubscriptionSchema);

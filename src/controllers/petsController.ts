@@ -18,6 +18,9 @@ export const getDetailedPetData = async (req: Request, res: Response, next: Next
         const { id } = req.query;
 
         const pet = await Pet.findById(id).select("-user -__v");
+        if (!pet) {
+            return res.status(500).json({ success: false, message: "Pet not found" })
+        }
 
         const overall_health = calculateOverallHealth(pet);
 
@@ -302,7 +305,7 @@ export const getMedications = async (req: Request, res: Response, next: NextFunc
         }
 
         // Calculate next_due dynamically
-        medications = medications.map((med: IMedication) => {
+        medications = medications.map(med => {
             if (med.is_ongoing) {
                 const start = new Date(med.start_date);
                 let next_due = null;
@@ -323,7 +326,7 @@ export const getMedications = async (req: Request, res: Response, next: NextFunc
                 }
 
                 // Attach it without saving to DB
-                med = med.toObject();
+                // med = med.toObject();
                 med.next_due = next_due;
             }
             return med;
@@ -466,13 +469,15 @@ export const getMedReminders = async (req: Request, res: Response, next: NextFun
         if (!petId) {
             return res.status(404).json({ success: false, message: "Pet ID is required!" })
         }
-        const scheduledReminders = await MedicationReminder.find({ pet: petId }).populate("medication").populate("pet").select("-__v");
+        const scheduledReminders = await MedicationReminder.find({ pet: petId })
+            .populate<{ medication: { is_ongoing: boolean } }>({ path: "medication", select: "is_ongoing" })
+            .populate("pet").select("-__v");
         // const filteredReminders = scheduledReminders.filter((reminder: IMedicationReminder) => reminder.user || reminder.pet.user.toString() === userId);
-        const filteredReminders = scheduledReminders.filter((reminder: IMedicationReminder) => reminder.user.toString() === userId);
+        const filteredReminders = scheduledReminders.filter(reminder => reminder.user.toString() === userId);
         // Deletes any reminders that have passed their end date or is not ongoing anymore
         const today = new Date();
-        const deleteReminders = filteredReminders.filter((item: IMedicationReminder) => (item.end_date != null && item.end_date < today) || item.medication.is_ongoing === false);
-        await MedicationReminder.deleteMany({ _id: { $in: deleteReminders.map((r: IMedicationReminder) => r._id) } });
+        const deleteReminders = filteredReminders.filter(item => (item.end_date != null && item.end_date < today) || item.medication.is_ongoing === false);
+        await MedicationReminder.deleteMany({ _id: { $in: deleteReminders.map(r => r._id) } });
 
         // console.log("scheduled reminders:", filteredReminders[0].reminder_times)
 
@@ -529,7 +534,7 @@ export const resetMedReminders = async (req: Request, res: Response, next: NextF
     try {
         const reminders = await MedicationReminder
             .find()
-            .populate({ path: "user", select: "timezone" });
+            .populate<{ user: { timezone: string } }>({ path: "user", select: "timezone" });
 
         let resetCount = 0;
 
@@ -625,7 +630,7 @@ export const resetMedReminders = async (req: Request, res: Response, next: NextF
 export const checkMedReminderNotifications = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const reminders = await MedicationReminder.find()
-            .populate({ path: "user", select: "timezone" })
+            .populate<{ user: { timezone: string } }>({ path: "user", select: "timezone" })
             .populate({ path: "medication", select: "medication dosage remaining instructions" })
             .populate({ path: "pet", select: "type name age gender breed" });
 
@@ -976,6 +981,9 @@ export const logActivityLevel = async (req: Request, res: Response, next: NextFu
                 }
             }
         }, { new: true, runValidators: true }).select("activity_level -_id");
+        if (!updated_activity_level) {
+            return res.status(500).json({ success: false, message: "Failed to update activity level" });
+        }
 
         res.status(200).json({ success: true, message: "Logged new activity level!", activity_level: updated_activity_level.activity_level })
     } catch (error) {
@@ -996,6 +1004,9 @@ export const logEnergyLevel = async (req: Request, res: Response, next: NextFunc
                 }
             }
         }, { new: true, runValidators: true }).select("energy_level -_id");
+        if (!updated_energy_level) {
+            return res.status(500).json({ success: false, message: "Failed to update energy level" });
+        }
 
         res.status(200).json({ success: true, message: "Logged new energy level!", energy_level: updated_energy_level.energy_level })
     } catch (error) {

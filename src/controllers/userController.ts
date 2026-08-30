@@ -35,6 +35,9 @@ export const userRegister = async (req: Request<{}, {}, RegisterUserDTO>, res: R
             password: dashedPassword
         })
         const userDetails = await User.findOne({ email: newUser.email }).select("-password");
+        if (!userDetails) {
+            return res.status(500).json({ message: "Failed to retrive user!" });
+        }
         const user_token = jwt.sign({ userId: userDetails._id }, process.env.JWT_SECRET_KEY!, { expiresIn: '60d' });
         res.status(200).cookie("user_token", user_token, cookieOptions).json({ success: true, message: "User registration successfull!", userDetails })
     } catch (error) {
@@ -85,8 +88,8 @@ export const googleAuth = async (req: Request, res: Response) => {
         const { name, email, picture, sub: googleId } = payload as {
             name?: string;
             email?: string;
-            picture?: string;
-            sub?: string
+            picture: string;
+            sub: string
         };
 
         if (!email) {

@@ -47,8 +47,8 @@ export const sendMedPushNotificationsLogic = async () => {
 
     const reminders = await MedicationReminder.find()
         .populate<{ user: { timezone: string, _id: Types.ObjectId } }>({ path: "user", select: "timezone" })
-        .populate({ path: "medication", select: "medication dosage" })
-        .populate({ path: "pet", select: "name user" });
+        .populate<{ medication: { medication: string, dosage: string } }>({ path: "medication", select: "medication dosage" })
+        .populate<{ pet: { name: string, user: Types.ObjectId } }>({ path: "pet", select: "name user" });
 
     const dueReminders = [];
     let sent = 0;
@@ -114,7 +114,7 @@ export const sendMedPushNotificationsLogic = async () => {
             reminder.user?._id?.toString() || pet.user?.toString();
 
         const userSubs = subscriptions.filter(
-            (s: any) => s.user?.toString() === userId
+            s => s.user?.toString() === userId
         );
 
         for (const sub of userSubs) {

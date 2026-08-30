@@ -10,7 +10,10 @@ export const bookAppointment = async (req: Request<{ id: string }, {}, BookAppoi
         const { date } = req.body;
 
         let vet = await Vet.findOne({ _id: vetId });
-
+        if(!vet) {
+            return res.status(500).json({ success: false, message: "Vet not found"})
+        }
+        
         const requestedDate = new Date(date);
 
         // Check if the date is already booked
