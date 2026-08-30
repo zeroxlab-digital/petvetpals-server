@@ -15,7 +15,7 @@ import nutritionistRouter from "../routes/vet-gpt/nutritionistRoutes.js";
 import allergyCoachRouter from "../routes/vet-gpt/allergyCoachRoutes.js";
 import cron from "node-cron";
 import pushRouter from "../routes/pushRouter.js";
-import { sendMedPushNotificationsLogic, sendPushNotificationsLogic } from "../controllers/pushController.js";
+import { sendMedPushNotificationsLogic } from "../controllers/pushController.js";
 import { resetMedReminders } from "../controllers/petsController.js";
 import { errorHandler } from "../middlewares/errorHandler.js";
 configDotenv();
