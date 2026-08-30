@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { sendMedPushNotificationsLogic, sendPushNotificationsLogic } from "../../controllers/pushController.js";
+import { sendMedPushNotificationsLogic } from "../../controllers/pushController.js";
 
 export default async function handler(req: Request, res: Response, next: NextFunction) {
   // at first verify secret key before running anything
@@ -13,12 +13,9 @@ export default async function handler(req: Request, res: Response, next: NextFun
     const medCount = await sendMedPushNotificationsLogic();
     console.log(`Sent ${medCount} medication notifications`);
 
-    const generalCount = await sendPushNotificationsLogic();
-    console.log(`Sent ${generalCount} general notifications`);
-
     return res.status(200).json({
       success: true,
-      message: `Sent ${medCount} med and ${generalCount} general notifications.`,
+      message: `Sent ${medCount} med notifications.`,
     });
   } catch (error: unknown) {
     next(error);
